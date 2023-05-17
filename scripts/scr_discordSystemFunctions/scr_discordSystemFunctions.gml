@@ -1,8 +1,8 @@
-/// @func __discord_add_request(requestId,[callback])
+/// @func __discord_add_request_to_sent(requestId,[callback])
 /// @desc Adds a new http request to the requestCallbacks array in the Discord controller object
 /// @param {real} requestId The id returned by http_request() 
 /// @param {function} callback Optional callback function to execute when a response to the request is received
-function __discord_add_request(_requestId, _callback = -1){
+function __discord_add_request_to_sent(_requestId, _callback = -1){
 	var _request = new __discordHttpRequest(_requestId, _callback);
 	array_push(obj_discordController.requestCallbacks, _request);
 }
@@ -231,6 +231,29 @@ function __discord_gateWay_event_parse(){
 
 	var _dataJsonString = buffer_read(_buffer, buffer_string);
 	return json_parse(_dataJsonString);	
+}
+
+/// @desc Sends an http request to the Discord API using the standard application/json content type
+/// @param {string} endpoint The endpoint to complete the request url
+/// @param {string} requestMethod The type of http request being sent such as "POST", "PATCH", or "DELETE"
+/// @param {struct} requestBody The struct containing the datafor the request body. Use -1 when sending no body.
+/// @param {string} botToken The token for the bot that is sending the request
+/// @param {function} callback The function to execute when a response to the request is received
+function __discord_send_http_request_standard(_endpoint, _requestMethod, _requestBody, _botToken, _callback = -1){
+	// Prepare the url and headers
+	var _baseUrl = "https://discord.com/api/v10/" + _endpoint;
+	var _headers = ds_map_create();
+	ds_map_add(_headers, "Content-Type", "application/json");
+	ds_map_add(_headers, "Authorization", "Bot " + _botToken);
+
+	// Send the HTTP request
+	var _bodyJson = (_requestBody != -1) ? json_stringify(_requestBody) : "";
+	
+	var _requestId = http_request(_baseUrl, _requestMethod, _headers, _bodyJson);
+	__discord_add_request_to_sent(_requestId, _callback);
+
+	// Cleanup
+	ds_map_destroy(_headers);	
 }
 
 

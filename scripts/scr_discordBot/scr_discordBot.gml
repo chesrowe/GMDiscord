@@ -112,7 +112,7 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 
 		// Send the HTTP request
 		var _requestId = http_request(_url, "POST", _headers, _body);
-		__discord_add_request(_requestId, _callback);
+		__discord_add_request_to_sent(_requestId, _callback);
 
 		// Cleanup
 		ds_map_destroy(_headers);		
@@ -212,7 +212,7 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 
 		// Send the HTTP request
 		var _requestId = http_request(_url, "PATCH", _headers, _body);
-		__discord_add_request(_requestId, _callback);
+		__discord_add_request_to_sent(_requestId, _callback);
 
 		// Cleanup
 		ds_map_destroy(_headers);		
@@ -229,21 +229,9 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 	/// @param {string} messageId The id of the message to delete
 	/// @param {function} callback The function to execute for the request's response. 
 	static messageDelete = function(_channelId, _messageId, _callback = -1){
-		// Prepare the url and headers
-		var _url = "https://discord.com/api/v10/channels/" + _channelId + "/messages/" + _messageId;
-		var _headers = ds_map_create();
-		ds_map_add(_headers, "Content-Type", "application/json");
-		ds_map_add(_headers, "Authorization", "Bot " + __botToken);
-
-		// Send the HTTP request
-		var _requestId = http_request(_url, "DELETE", _headers, "");
-		__discord_add_request(_requestId, _callback);
-
-		// Cleanup
-		ds_map_destroy(_headers);
+		__discord_send_http_request_standard("channels/" + _channelId + "/messages/" + _messageId, "DELETE", -1, __botToken, _callback);
 	}
 
-	
 	#endregion
 	
 	#region messageDeleteBulk(channelId, messages, [callback])
@@ -253,26 +241,12 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 	/// @param {string} channelId The id of the channel containing the messages to be deleted
 	/// @param {array} messages Array of message IDs to be deleted
 	static messageDeleteBulk = function(_channelId, _messages, _callback = -1){
-	    // Prepare the url and headers
-	    var _url = "https://discord.com/api/v10/channels/" + _channelId + "/messages/bulk-delete";
-	    var _headers = ds_map_create();
-	    ds_map_add(_headers, "Content-Type", "application/json");
-	    ds_map_add(_headers, "Authorization", "Bot " + __botToken);
-
 	    // Create a struct containing the message IDs
 	    var _bodyData = {
-	        "messages": _messages
+	        messages: _messages
 	    };
 
-	    // Convert the struct to JSON
-	    var _body = json_stringify(_bodyData);
-
-	    // Send the HTTP request
-	    var _requestId = http_request(_url, "POST", _headers, _body);
-	    __discord_add_request(_requestId, _callback);
-
-	    // Cleanup
-	    ds_map_destroy(_headers);
+		__discord_send_http_request_standard("channels/" + _channelId + "/messages/bulk-delete", "POST", _bodyJson, __botToken, _callback);
 	}
 
 	#endregion
@@ -292,10 +266,12 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 		
 		// Send the HTTP request
 		var _requestId = http_request(_url, "GET", _headers, "");
-		__discord_add_request(_requestId, _callback);
+		__discord_add_request_to_sent(_requestId, _callback);
 
 		// Cleanup
 		ds_map_destroy(_headers);
+		
+		__discord_send_http_request_standard("channels/" + _channelId + "/messages/" + _messageId, "GET", -1, __botToken, _callback);
 	}
 
 	
@@ -312,17 +288,8 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 		var _clampedLimit = clamp(_limit, 1, 100);
 		
 		// Prepare the url and headers
-		var _url = "https://discord.com/api/v10/channels/" + _channelId + "/messages?limit=" + string(int64(_clampedLimit));
-		var _headers = ds_map_create();
-		ds_map_add(_headers, "Content-Type", "application/json");
-		ds_map_add(_headers, "Authorization", "Bot " + __botToken);
-
-		// Send the HTTP request
-		var _requestId = http_request(_url, "GET", _headers, "");
-		__discord_add_request(_requestId, _callback);
-
-		// Cleanup
-		ds_map_destroy(_headers);
+		var _urlEnpoint = "channels/" + _channelId + "/messages?limit=" + string(int64(_clampedLimit));
+		__discord_send_http_request_standard(_urlEnpoint, "GET", -1, __botToken, _callback);
 	}
 	
 	#endregion	
@@ -342,7 +309,7 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 
 		// Send the HTTP request
 		var _requestId = http_request(_url, "GET", _headers, "");
-		__discord_add_request(_requestId, _callback);
+		__discord_add_request_to_sent(_requestId, _callback);
 
 		// Cleanup
 		ds_map_destroy(_headers);
@@ -366,7 +333,7 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 
 		// Send the HTTP request
 		var _requestId = http_request(_url, "PUT", _headers, "");
-		__discord_add_request(_requestId, _callback);
+		__discord_add_request_to_sent(_requestId, _callback);
 
 		// Cleanup
 		ds_map_destroy(_headers);		
@@ -389,7 +356,7 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 
 		// Send the HTTP request
 		var _requestId = http_request(_url, "DELETE", _headers, "");
-		__discord_add_request(_requestId, _callback);
+		__discord_add_request_to_sent(_requestId, _callback);
 
 		// Cleanup
 		ds_map_destroy(_headers);
@@ -413,7 +380,7 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 
 		// Send the HTTP request
 		var _requestId = http_request(_url, "POST", _headers, "");
-		__discord_add_request(_requestId, _callback);
+		__discord_add_request_to_sent(_requestId, _callback);
 
 		// Cleanup
 		ds_map_destroy(_headers);
@@ -436,7 +403,7 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 
 	    // Send the HTTP request
 	    var _requestId = http_request(_url, "PUT", _headers, "");
-	    __discord_add_request(_requestId, _callback);
+	    __discord_add_request_to_sent(_requestId, _callback);
 
 	    // Cleanup
 	    ds_map_destroy(_headers);
@@ -459,7 +426,7 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 
 		// Send the HTTP request
 		var _requestId = http_request(_url, "POST", _headers, "");
-		__discord_add_request(_requestId, _callback);
+		__discord_add_request_to_sent(_requestId, _callback);
 
 		// Cleanup
 		ds_map_destroy(_headers);		
@@ -514,7 +481,7 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 
 		// Send the HTTP request
 		var _requestId = http_request(_url, "POST", _headers, _body);
-		__discord_add_request(_requestId, _callback);
+		__discord_add_request_to_sent(_requestId, _callback);
 
 		// Cleanup
 		ds_map_destroy(_headers);		
@@ -783,7 +750,7 @@ function discordFileAttachment(_filePath, _fileName, _fileDescripton = "") const
 /// @description Activity 
 /// @param name
 /// @param type The type of activity
-function discordPresenceActivity(_name, _activityType, _url = "", _createdAt, _timestamps, _applicationId, _details, _state, _emoji, _party, _assets, _secrets, _instance, _flags, _buttons) constructor {
+function discordPresenceActivity(_name, _activityType, _url, _createdAt, _timestamps, _applicationId, _details, _state, _emoji, _party, _assets, _secrets, _instance, _flags, _buttons) constructor {
 	name = _name;
 	type = _activityType;
 		

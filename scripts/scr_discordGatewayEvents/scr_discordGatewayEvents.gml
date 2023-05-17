@@ -87,7 +87,7 @@ function discord_interaction_response(_interactionId, _interactionToken, _callba
 
 	// Send the HTTP request
 	var _requestId = http_request(_url, "POST", _headers, _body);
-	__discord_add_request(_requestId, _callback);
+	__discord_add_request_to_sent(_requestId, _callback);
 
 	// Cleanup
 	ds_map_destroy(_headers);		
