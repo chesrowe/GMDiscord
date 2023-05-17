@@ -1,2 +1,2 @@
 # GMDiscord
- Discord API integration in GameMaker
+ Discord API integration for GameMaker LTS+
