@@ -1,5 +1,5 @@
 /// @func discordBot(botToken, applicationId, [useGatewayEvents])
-/// @desc Create a new discord bot struct with the given token
+/// @desc Create a new discord bot struct with the given token and application id
 /// @param {string} botToken Your bot's token found here https://discord.com/developers/applications
 /// @param {string} applicationId Your bot's application id
 /// @param {bool} useGatewayEvents Whether or not to set up a gateway connect for this bot
@@ -350,16 +350,85 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 
 	#endregion
 	
-	#region reactionCreate(channelId, messageId, emoji, [callback])
+	#region messageReactionCreate(channelId, messageId, emoji, [callback])
 	
-	/// @func reactionCreate(channelId, messageId, emoji, [callback])
+	/// @func messageReactionCreate(channelId, messageId, emoji, [callback])
 	/// @desc Adds a reaction to a message in a given Discord channel
 	/// @param {string} channelId The id of the channel that contains the message
 	/// @param {string} messageId The id of the message to add the reaction to
 	/// @param {string} emoji The emoji to use for the reaction
-	static reactionCreate = function(_channelId, _messageId, _emoji, _callback = -1) {	
+	static messageReactionCreate = function(_channelId, _messageId, _emoji, _callback = -1) {	
 		var _urlEnpoint = "channels/" + _channelId + "/messages/" + _messageId + "/reactions/" + __url_encode(_emoji) + "/@me";
 		__discord_send_http_request_standard(_urlEnpoint, "PUT", -1, __botToken, _callback);
+	}
+
+	#endregion
+	
+	#region messageReactionDelete(channelId, messageId, emoji, [callback])
+
+	/// @func messageReactionDelete(channelId, messageId, emoji, [callback])
+	/// @desc Deletes a reaction from a message
+	/// @param {string} channelId The id of the channel that contains the message
+	/// @param {string} messageId The id of the message to remove the reaction from
+	/// @param {string} emoji The url-encoded emoji to remove
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	static messageReactionDelete = function(_channelId, _messageId, _emoji, _callback = -1){
+		__discord_send_http_request_standard("channels/" + _channelId + "/messages/" + _messageId + "/reactions/" + _emoji + "/@me", "DELETE", -1, __botToken, _callback);
+	}
+
+	#endregion
+	
+	#region messageReactionsDeleteAll(channelId, messageId, [callback])
+
+	/// @func messageReactionsDeleteAll(channelId, messageId, [callback])
+	/// @desc Deletes all reactions from a message
+	/// @param {string} channelId The id of the channel that contains the message
+	/// @param {string} messageId The id of the message to remove all reactions from
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	static messageReactionsDeleteAll = function(_channelId, _messageId, _callback = -1){
+		__discord_send_http_request_standard("channels/" + _channelId + "/messages/" + _messageId + "/reactions", "DELETE", -1, __botToken, _callback);
+	}
+
+	#endregion
+	
+	#region userGet(userId, [callback])
+
+	/// @func userGet(userId, [callback])
+	/// @desc Retrieves a user object
+	/// @param {string} userId The id of the user you want to get
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	static userGet = function(_userId, _callback = -1){
+		__discord_send_http_request_standard("users/" + _userId, "GET", -1, __botToken, _callback);
+	}
+
+	#endregion
+	
+	#region userDMCreate(recipientId, [callback])
+
+	/// @func userDMCreate(recipientId, [callback])
+	/// @desc Opens a direct message channel with a user
+	/// @param {string} recipientId The id of the user to open a direct message with
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	static userDMCreate = function(_recipientId, _callback = -1){
+		// Create a struct containing the recipientId
+		var _bodyData = {
+			recipient_id: _recipientId
+		};
+
+		__discord_send_http_request_standard("users/@me/channels", "POST", _bodyData, __botToken, _callback);
+	}
+
+	#endregion
+	
+	#region channelCreate(guildId, channelData, [callback])
+
+	/// @func channelCreate(guildId, channelData, [callback])
+	/// @desc Creates a new guild channel
+	/// @param {string} guildId The id of the guild to create the channel in
+	/// @param {struct} channelData The data for the new channel
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	static channelCreate = function(_guildId, _channelData, _callback = -1){
+		__discord_send_http_request_standard("guilds/" + _guildId + "/channels", "POST", _channelData, __botToken, _callback);
 	}
 
 	#endregion
