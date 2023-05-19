@@ -1,10 +1,12 @@
-/// @func discordBot(botToken, [useGatewayEvents])
+/// @func discordBot(botToken, applicationId, [useGatewayEvents])
 /// @desc Create a new discord bot struct with the given token
 /// @param {string} botToken Your bot's token found here https://discord.com/developers/applications
+/// @param {string} applicationId Your bot's application id
 /// @param {bool} useGatewayEvents Whether or not to set up a gateway connect for this bot
-function discordBot(_botToken, _useGatewayEvents = false) constructor {
+function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constructor {
 	array_push(obj_discordController.botArray, self);
 	__botToken = _botToken;
+	__applicationId = _applicationId;
 	
 	#region messageSend(channelId, [content], [callback], [components], [embeds], [stickerIds], [files])
 	
@@ -246,7 +248,8 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 	        messages: _messages
 	    };
 
-		__discord_send_http_request_standard("channels/" + _channelId + "/messages/bulk-delete", "POST", _bodyJson, __botToken, _callback);
+		var _urlEndpoint = "channels/" + _channelId + "/messages/bulk-delete";
+		__discord_send_http_request_standard(_urlEndpoint, "POST", _bodyJson, __botToken, _callback);
 	}
 
 	#endregion
@@ -274,7 +277,6 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 		__discord_send_http_request_standard("channels/" + _channelId + "/messages/" + _messageId, "GET", -1, __botToken, _callback);
 	}
 
-	
 	#endregion
 	
 	#region messageGetBulk(channelId, [limit], [callback])
@@ -287,7 +289,6 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 	static messageGetBulk = function(_channelId, _limit = 50, _callback = -1) {
 		var _clampedLimit = clamp(_limit, 1, 100);
 		
-		// Prepare the url and headers
 		var _urlEnpoint = "channels/" + _channelId + "/messages?limit=" + string(int64(_clampedLimit));
 		__discord_send_http_request_standard(_urlEnpoint, "GET", -1, __botToken, _callback);
 	}
@@ -300,19 +301,9 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 	/// @desc Retrieves all pinned messages in the given Discord channel
 	/// @param {string} channelId The id of the channel that the pinned messages are being retrieved from
 	/// @param {function} callback The function to execute for the request's response. Default: -1
-	static messageGetPinned = function(_channelId, _callback = -1) {
-		// Prepare the url and headers
-		var _url = "https://discord.com/api/v10/channels/" + _channelId + "/pins";
-		var _headers = ds_map_create();
-		ds_map_add(_headers, "Content-Type", "application/json");
-		ds_map_add(_headers, "Authorization", "Bot " + __botToken);
-
-		// Send the HTTP request
-		var _requestId = http_request(_url, "GET", _headers, "");
-		__discord_add_request_to_sent(_requestId, _callback);
-
-		// Cleanup
-		ds_map_destroy(_headers);
+	static messageGetPinned = function(_channelId, _callback = -1) {	
+		var _urlEnpoint = "channels/" + _channelId + "/pins";
+		__discord_send_http_request_standard(_urlEnpoint, "GET", -1, __botToken, _callback);
 	}
 	
 	#endregion
@@ -325,18 +316,8 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 	/// @param {string} messageId The id of the message to pin
 	/// @param {function} callback The function to execute for the request's response. Default: -1
 	static messagePin = function(_channelId, _messageId, _callback = -1){
-		// Prepare the url and headers
-		var _url = "https://discord.com/api/v10/channels/" + _channelId + "/pins/" + _messageId;
-		var _headers = ds_map_create();
-		ds_map_add(_headers, "Content-Type", "application/json");
-		ds_map_add(_headers, "Authorization", "Bot " + __botToken);
-
-		// Send the HTTP request
-		var _requestId = http_request(_url, "PUT", _headers, "");
-		__discord_add_request_to_sent(_requestId, _callback);
-
-		// Cleanup
-		ds_map_destroy(_headers);		
+		var _urlEnpoint = "channels/" + _channelId + "/pins/" + _messageId;
+		__discord_send_http_request_standard(_urlEnpoint, "PUT", -1, __botToken, _callback);
 	}
 	
 	#endregion
@@ -348,18 +329,9 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 	/// @param {string} channelId The id of the channel that the message is being unpinned from
 	/// @param {string} messageId The id of the message to unpin
 	/// @param {function} callback The function to execute for the request's response. Default: -1
-	static messageUnpin = function(_channelId, _messageId, _callback = -1) {
-		// Prepare the url and headers
-		var _url = "https://discord.com/api/v10/channels/" + _channelId + "/pins/" + _messageId;
-		var _headers = ds_map_create();
-		ds_map_add(_headers, "Authorization", "Bot " + __botToken);
-
-		// Send the HTTP request
-		var _requestId = http_request(_url, "DELETE", _headers, "");
-		__discord_add_request_to_sent(_requestId, _callback);
-
-		// Cleanup
-		ds_map_destroy(_headers);
+	static messageUnpin = function(_channelId, _messageId, _callback = -1) {		
+		var _urlEnpoint = "channels/" + _channelId + "/pins/" + _messageId;
+		__discord_send_http_request_standard(_urlEnpoint, "DELETE", -1, __botToken, _callback);
 	}
 
 	#endregion
@@ -371,19 +343,9 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 	/// @param {string} channelId The id of the channel that the message is being crossposted from
 	/// @param {string} messageId The id of the message to crosspost
 	/// @param {function} callback The function to execute for the request's response. Default: -1
-	static messageCrosspost = function(_channelId, _messageId, _callback = -1){
-		// Prepare the url and headers
-		var _url = "https://discord.com/api/v10/channels/" + _channelId + "/messages/" + _messageId + "/crosspost";
-		var _headers = ds_map_create();
-		ds_map_add(_headers, "Content-Type", "application/json");
-		ds_map_add(_headers, "Authorization", "Bot " + __botToken);
-
-		// Send the HTTP request
-		var _requestId = http_request(_url, "POST", _headers, "");
-		__discord_add_request_to_sent(_requestId, _callback);
-
-		// Cleanup
-		ds_map_destroy(_headers);
+	static messageCrosspost = function(_channelId, _messageId, _callback = -1){		
+		var _urlEnpoint = "channels/" + _channelId + "/messages/" + _messageId + "/crosspost";
+		__discord_send_http_request_standard(_urlEnpoint, "POST", -1, __botToken, _callback);
 	}
 
 	#endregion
@@ -395,18 +357,64 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 	/// @param {string} channelId The id of the channel that contains the message
 	/// @param {string} messageId The id of the message to add the reaction to
 	/// @param {string} emoji The emoji to use for the reaction
-	static reactionCreate = function(_channelId, _messageId, _emoji, _callback = -1) {
-	    // Prepare the URL and headers
-	    var _url = "https://discord.com/api/v10/channels/" + _channelId + "/messages/" + _messageId + "/reactions/" + __url_encode(_emoji) + "/@me";
-	    var _headers = ds_map_create();
-	    ds_map_add(_headers, "Authorization", "Bot " + __botToken);
+	static reactionCreate = function(_channelId, _messageId, _emoji, _callback = -1) {	
+		var _urlEnpoint = "channels/" + _channelId + "/messages/" + _messageId + "/reactions/" + __url_encode(_emoji) + "/@me";
+		__discord_send_http_request_standard(_urlEnpoint, "PUT", -1, __botToken, _callback);
+	}
 
-	    // Send the HTTP request
-	    var _requestId = http_request(_url, "PUT", _headers, "");
-	    __discord_add_request_to_sent(_requestId, _callback);
+	#endregion
+	
+	#region guildCommandCreate(guildId, commandData, [callback])
+	
+	/// @func guildCommandCreate(guildId, commandData, [callback])
+	/// @desc Registers a new command for a guild
+	/// @param {string} guildId The id of the guild where the command will be registered
+	/// @param {struct.discordGuildCommand} commandData Struct containing the command's name, description, and options
+	static guildCommandCreate = function(_guildId, _commandData, _callback = -1){
+	    var _urlEndpoint = "applications/" + __applicationId + "/guilds/" + _guildId + "/commands";
+	    __discord_send_http_request_standard(_urlEndpoint, "POST", _commandData, __botToken, _callback);
+	}
 
-	    // Cleanup
-	    ds_map_destroy(_headers);
+	#endregion
+	
+	#region guildCommandEdit(guildId, commandId, commandData, [callback])
+   
+	/// @func guildCommandEdit(guildId, commandId, commandData, [callback])
+	/// @desc Edits an existing command for a guild
+	/// @param {string} guildId The id of the guild where the command exists
+	/// @param {string} commandId The id of the command that will be edited
+	/// @param {struct.discordGuildCommand} commandData Struct containing the command's new name, description, and options
+	static guildCommandEdit = function(_guildId, _commandId, _commandData, _callback = -1){
+	    var _urlEndpoint = "applications/" + __applicationId + "/guilds/" + _guildId + "/commands/" + _commandId;
+	    __discord_send_http_request_standard(_urlEndpoint, "PATCH", _commandData, __botToken, _callback);
+	}
+
+	#endregion
+	
+	#region guildCommandDelete(guildId, commandId, [callback])
+	
+	/// @func guildCommandDelete(guildId, commandId, [callback])
+	/// @desc Deletes a command for a guild
+	/// @param {string} guildId The id of the guild where the command will be deleted
+	/// @param {string} commandId The id of the command to delete
+	static guildCommandDelete = function(_guildId, _commandId, _callback = -1){
+	    var _urlEndpoint = "applications/" + __applicationId + "/guilds/" + _guildId + "/commands/" + _commandId;
+	    __discord_send_http_request_standard(_urlEndpoint, "DELETE", -1, __botToken, _callback);
+	}
+	
+	#endregion
+	
+	#region guildCommandGet(guildId, commandId, [callback])
+	
+	/// @func guildCommandGet(guildId, commandId, [callback])
+	/// @desc Retrieves a specific command for a guild
+	/// @param {string} guildId The id of the guild where the command will be retrieved from
+	/// @param {string} commandId The id of the command to be retrieved
+	/// @param {function} [callback] The function to execute when a response to the request is received
+	static guildCommandGet = function(_guildId, _commandId, _callback = -1){
+		// Prepare the endpoint url
+		var _urlEndpoint = "applications/" + __applicationId + "/guilds/" + _guildId + "/commands/" + _commandId;
+		__discord_send_http_request_standard(_urlEndpoint, "GET", -1, __botToken, _callback);
 	}
 
 	#endregion
@@ -418,18 +426,8 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 	/// @param {string} channelId The id of the channel where the typing indicator will be shown
 	/// @param {function} callback The function to execute for the request's response. Default: -1
 	static triggerTypingIndicator = function(_channelId, _callback = -1){
-		// Prepare the url and headers
-		var _url = "https://discord.com/api/v10/channels/" + _channelId + "/typing";
-		var _headers = ds_map_create();
-		ds_map_add(_headers, "Content-Type", "application/json");
-		ds_map_add(_headers, "Authorization", "Bot " + __botToken);
-
-		// Send the HTTP request
-		var _requestId = http_request(_url, "POST", _headers, "");
-		__discord_add_request_to_sent(_requestId, _callback);
-
-		// Cleanup
-		ds_map_destroy(_headers);		
+		var _urlEnpoint = "channels/" + _channelId + "/typing";
+		__discord_send_http_request_standard(_urlEnpoint, "POST", -1, __botToken, _callback);
 	}
 	
 	#endregion
@@ -570,8 +568,7 @@ function discordBot(_botToken, _useGatewayEvents = false) constructor {
 		buffer_delete(_payloadBufferTrimmed);		
 	}
 	
-	#endregion
-	
+	#endregion	
 } 
 
 enum DISCORD_COMPONENT_TYPE {
@@ -587,8 +584,137 @@ enum DISCORD_BUTTON_STYLE {
     danger = 4,
     link = 5
 }
+	
+enum DISCORD_INTERATION_TYPE {
+	ping = 1,
+	applicationCommand,
+	messageComponent,
+	applicationCommandAutocomplete,
+	modalSubmit
+}
+
+enum DISCORD_COMMAND_TYPE {
+	chatInput = 1,
+	user,
+	message
+}
+
+enum DISCORD_COMMAND_OPTION_TYPE {
+	subCommand = 1,
+	subCommandGroup,
+	string,
+	integer,
+	boolean,
+	user,
+	channel,
+	role,
+	mentionable,
+	number,
+	attachment
+}
+
+enum DISCORD_PERMISSIONS {
+    createInstantInvite = 0x0000000000000001,
+    kickMembers = 0x0000000000000002,
+    banMembers = 0x0000000000000004,
+    administrator = 0x0000000000000008,
+    manageChannels = 0x0000000000000010,
+    manageGuild = 0x0000000000000020,
+    addReactions = 0x0000000000000040,
+    viewAuditLog = 0x0000000000000080,
+    prioritySpeaker = 0x0000000000000100,
+    stream = 0x0000000000000200,
+    viewChannel = 0x0000000000000400,
+    sendMessages = 0x0000000000000800,
+    sendTtsMessages = 0x0000000000001000,
+    manageMessages = 0x0000000000002000,
+    embedLinks = 0x0000000000004000,
+    attachFiles = 0x0000000000008000,
+    readMessageHistory = 0x0000000000010000,
+    mentionEveryone = 0x0000000000020000,
+    useExternalEmojis = 0x0000000000040000,
+    viewGuildInsights = 0x0000000000080000,
+    connect = 0x0000000000100000,
+    speak = 0x0000000000200000,
+    muteMembers = 0x0000000000400000,
+    deafenMembers = 0x0000000000800000,
+    moveMembers = 0x0000000001000000,
+    useVad = 0x0000000002000000,
+    changeNickname = 0x0000000004000000,
+    manageNicknames = 0x0000000008000000,
+    manageRoles = 0x0000000010000000,
+    manageWebhooks = 0x0000000020000000,
+    manageGuildExpressions = 0x0000000040000000,
+    useApplicationCommands = 0x0000000080000000,
+    requestToSpeak = 0x0000000100000000,
+    manageEvents = 0x0000000200000000,
+    manageThreads = 0x0000000400000000,
+    createPublicThreads = 0x0000000800000000,
+    createPrivateThreads = 0x0000001000000000,
+    useExternalStickers = 0x0000002000000000,
+    sendMessagesInThreads = 0x0000004000000000,
+    useEmbeddedActivities = 0x0000008000000000,
+    moderateMembers = 0x0000010000000000,
+    viewCreatorMonetizationAnalytics = 0x0000020000000000,
+    useSoundboard = 0x0000040000000000,
+    sendVoiceMessages = 0x0000400000000000
+}
 
 #region Other classes
+
+/// @func discordGuildCommand(name, description, type, options, defaultMemberPermissions, [dmPermission], [defaultPermission], [nsfw])
+/// @desc Constructs a new guildCommand object.
+/// @param {string} name The name of the command.
+/// @param {string} description The description of the command.
+/// @param {number} type The type of the command.
+/// @param {Array} options The options for the command.
+/// @param {string} defaultMemberPermissions The default member permissions for the command. Use DISCORD_PERMISSIONS enum. 
+/// @param {boolean} dmPermission Whether the command is available in DMs.
+/// @param {boolean} defaultPermission Whether the command is enabled by default.
+/// @param {boolean} nsfw Whether the command is age-restricted.
+function discordGuildCommand(_name, _description, _type, _options, _defaultMemberPermissions, _dmPermission = true, _defaultPermission = true, _nsfw = false) constructor {
+    name = _name;
+    description = _description;
+    type = _type;
+	
+	if (array_length(_options) > 0){
+		options = _options;
+	}
+	
+    default_member_permissions = _defaultMemberPermissions;
+    dm_permission = _dmPermission;
+    default_permission = _defaultPermission;
+    nsfw = _nsfw;
+}
+
+/// @func discordCommandOption(type, name, description, required, choices, options, channelTypes, minValue, maxValue,_minLength, maxLength, autocomplete)
+/// @desc Constructs a new discordCommandOption object.
+/// @param {number} type - The type of the option. Use the enum DISCORD_COMMAND_OPTION_TYPE
+/// @param {string} name - The name of the option.
+/// @param {string} description - The description of the option.
+/// @param {boolean} required - Whether the option is required.
+/// @param {Array} choices - The choices for the option.
+/// @param {Array} options - The options for the option.
+/// @param {Array} channelTypes - The channel types for the option.
+/// @param {number} minValue - The minimum value for the option.
+/// @param {number} maxValue - The maximum value for the option.
+/// @param {number} minLength - The minimum length for the option.
+/// @param {number} maxLength - The maximum length for the option.
+/// @param {boolean} _autocomplete - Whether autocomplete is enabled for the option.
+function discordCommandOption(_type, _name, _description, _required, _choices, _options, _channelTypes, _minValue, _maxValue, _minLength, _maxLength, _autocomplete) constructor {
+    type = _type;
+    name = _name;
+    description = _description;
+    required = _required;
+    choices = _choices;
+    options = _options;
+    channelTypes = _channelTypes;
+    minValue = _minValue;
+    maxValue = _maxValue;
+    minLength = _minLength;
+    maxLength = _maxLength;
+    autocomplete = _autocomplete;
+}
 
 /// @func discordMessageComponent(type, [style], [label], [emoji], [customId], [url], [options])
 /// @desc Creates a new Discord message component.

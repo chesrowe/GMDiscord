@@ -25,7 +25,8 @@ repeat(array_length(obj_discordController.botArray)){
 		        // Event Handling
 		        switch (_receivedData.op){
 		            case GATEWAY_OP_CODE.hello:
-		                var _heartbeatInterval = 10;//(_receivedData.d.heartbeat_interval / 1000);  // Convert ms to seconds
+						_currentBot.__gatewaySendHeartbeat();
+		                var _heartbeatInterval = floor(_receivedData.d.heartbeat_interval / 1000);  // Convert ms to seconds
 						show_debug_message(_heartbeatInterval);
 						//Create a Time Source to send heartbeats
 						var _heartbeatTimeSource = time_source_create(

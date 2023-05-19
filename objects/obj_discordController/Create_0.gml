@@ -2,12 +2,12 @@ requestCallbacks = [];
 botArray = [];
 global.lastMessageTest = -1;
 
-errorBot = new discordBot(ERROR_BOT_TOKEN, true);
+errorBot = new discordBot(global.config.errorBotToken, global.config.applicationId, true);
 errorBot.gatewayEventCallbacks[$ "INTERACTION_CREATE"] = function(){
 	var _messageEvent = __discord_gateWay_event_parse().d;
-	__discordTrace("Button was pressed");
+	__discordTrace("Command was sent");
 	
-	errorBot.interactionResponseSend(_messageEvent.id, _messageEvent.token, DISCORD_INTERATION_CALLBACK_TYPE.deferredUpdateMessage, "", _callback);
+	errorBot.interactionResponseSend(_messageEvent.id, _messageEvent.token, DISCORD_INTERATION_CALLBACK_TYPE.channelMessageWithSource, "asdf");
 }
 
 

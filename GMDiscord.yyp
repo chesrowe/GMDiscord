@@ -3,11 +3,13 @@
   "resourceVersion": "1.6",
   "name": "GMDiscord",
   "resources": [
+    {"id":{"name":"libfilesystem","path":"extensions/libfilesystem/libfilesystem.yy",},"order":0,},
     {"id":{"name":"scr_discordBot","path":"scripts/scr_discordBot/scr_discordBot.yy",},"order":0,},
     {"id":{"name":"scr_stuff","path":"scripts/scr_stuff/scr_stuff.yy",},"order":0,},
     {"id":{"name":"scr_discordSystemFunctions","path":"scripts/scr_discordSystemFunctions/scr_discordSystemFunctions.yy",},"order":1,},
     {"id":{"name":"obj_discordController","path":"objects/obj_discordController/obj_discordController.yy",},"order":3,},
     {"id":{"name":"scr_discordRandom","path":"scripts/scr_discordRandom/scr_discordRandom.yy",},"order":2,},
+    {"id":{"name":"scr_fileSystem","path":"scripts/scr_fileSystem/scr_fileSystem.yy",},"order":2,},
     {"id":{"name":"scr_discordInit","path":"scripts/scr_discordInit/scr_discordInit.yy",},"order":4,},
     {"id":{"name":"scr_discordGatewayEvents","path":"scripts/scr_discordGatewayEvents/scr_discordGatewayEvents.yy",},"order":5,},
     {"id":{"name":"scr_discordConfig","path":"scripts/scr_discordConfig/scr_discordConfig.yy",},"order":6,},

@@ -1,13 +1,25 @@
-#macro DM_BOT_TOKEN "MTEwMTE2MjU3NzcyNTIyNzEwOA.GZz1M6.oQDTFa-YG_9kLIKPE_jJeUfHD6oGJ0_nlqJLwQ"
-#macro ERROR_BOT_TOKEN "MTEwMDg2NjU0MjY3OTM3MTkwNg.GlhNxl.WkpcFEGd_NtqQ3lDLMziZt2vx7KFSPXZTD6wmA"
-#macro OPENAI_API_KEY "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"
-#macro MAX_CHAT_TOKENS 4000
-#macro CHANNEL_ID "1101162388910243931"
-
+var _configPath = "C:/Users/madma/OneDrive/Desktop/GMDiscord/config.json"
+global.config = json_load(_configPath);
 global.lastMessageId = "";
 global.lastUserMessageId = ""; 
 global.lastBotMessageId = "";
 
+/// @func json_load(filePath)
+/// @desc Loads a json file and parses in as a struct then returns that struct or -1 if failed
+/// @param {string} filePath The path to the json file
+function json_load(_filePath){
+	var _buff = buffer_load(_filePath);
+	
+	if (_buff != -1){
+		var _str = buffer_read(_buff, buffer_text);
+		buffer_delete(_buff);
+		//var _parsedJson =  json_parse(_str);
+		var _parsedJson = json_parse(_str);
+		return is_struct(_parsedJson) ? _parsedJson : -1;
+	}else{
+		return -1;
+	}
+}
 
 
 
