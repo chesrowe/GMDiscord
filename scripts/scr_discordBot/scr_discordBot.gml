@@ -403,13 +403,13 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 
 	#endregion
 	
-	#region userDMCreate(recipientId, [callback])
+	#region DMCreate(recipientId, [callback])
 
-	/// @func userDMCreate(recipientId, [callback])
+	/// @func DMCreate(recipientId, [callback])
 	/// @desc Opens a direct message channel with a user
 	/// @param {string} recipientId The id of the user to open a direct message with
 	/// @param {function} callback The function to execute for the request's response. Default: -1
-	static userDMCreate = function(_recipientId, _callback = -1){
+	static DMCreate = function(_recipientId, _callback = -1){
 		// Create a struct containing the recipientId
 		var _bodyData = {
 			recipient_id: _recipientId
@@ -429,6 +429,18 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	/// @param {function} callback The function to execute for the request's response. Default: -1
 	static channelCreate = function(_guildId, _channelData, _callback = -1){
 		__discord_send_http_request_standard("guilds/" + _guildId + "/channels", "POST", _channelData, __botToken, _callback);
+	}
+
+	#endregion
+	
+	#region channelDelete(channelId, [callback])
+	
+	/// @func channelDelete(channelId, [callback])
+	/// @desc Deletes a specific channel
+	/// @param {string} channelId The id of the channel you want to delete
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	static channelDelete = function(_channelId, _callback = -1){
+		__discord_send_http_request_standard("channels/" + _channelId, "DELETE", -1, __botToken, _callback);
 	}
 
 	#endregion
@@ -486,6 +498,85 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 		__discord_send_http_request_standard(_urlEndpoint, "GET", -1, __botToken, _callback);
 	}
 
+	#endregion
+	
+	#region guildMemberBan(guildId, userId, [deleteMessageDays], [reason], [callback])
+	
+	/// @func guildMemberBan(guildId, userId, [deleteMessageDays], [reason], [callback])
+	/// @desc Bans a guild member
+	/// @param {string} guildId The id of the guild
+	/// @param {string} userId The id of the user to ban
+	/// @param {real} deleteMessageDays Number of days to delete messages for (0-7). Default: 0
+	/// @param {string} reason The reason for the ban. Default: ""
+	/// @param {function} callback The function to execute for the request's response. 
+	static guildMemberBan = function(_guildId, _userId, _deleteMessageDays = 0, _reason = "", _callback = -1){
+		var _urlEndpoint = "guilds/" + _guildId + "/bans/" + _userId;
+		var _bodyData = {
+			delete_message_days: _deleteMessageDays,
+			reason: _reason
+		};
+		
+		__discord_send_http_request_standard(_urlEndpoint, "PUT", _bodyData, __botToken, _callback);
+	}
+
+	#endregion
+	
+	#region guildMemberUnban(guildId, userId, [callback])
+	
+	/// @func guildMemberUnban(guildId, userId, [callback])
+	/// @desc Unbans a guild member
+	/// @param {string} guildId The id of the guild
+	/// @param {string} userId The id of the user to unban
+	/// @param {function} callback The function to execute for the request's response. 
+	static guildMemberUnban = function(_guildId, _userId, _callback = -1){
+		var _urlEndpoint = "guilds/" + _guildId + "/bans/" + _userId;
+		
+		__discord_send_http_request_standard(_urlEndpoint, "DELETE", -1, __botToken, _callback);
+	}
+
+	#endregion
+	
+	#region guildMemberKick(guildId, userId, [reason], [callback])
+	
+	/// @func guildMemberKick(guildId, userId, [reason], [callback])
+	/// @desc Kicks a guild member
+	/// @param {string} guildId The id of the guild
+	/// @param {string} userId The id of the user to kick
+	/// @param {string} reason The reason for the kick. Default: ""
+	/// @param {function} callback The function to execute for the request's response. 
+	static guildMemberKick = function(_guildId, _userId, _reason = "", _callback = -1){
+		var _urlEndpoint = "guilds/" + _guildId + "/members/" + _userId;
+		var _bodyData = {
+			reason: _reason
+		};
+		
+		__discord_send_http_request_standard(_urlEndpoint, "DELETE", _bodyData, __botToken, _callback);
+	}
+
+	#endregion
+	
+	#region guildMembersGet(guildId, [callback])
+	
+	/// @func guildMembersGet(guildId, [callback])
+	/// @desc Fetches the members of a server
+	/// @param {string} guildId The id of the guild (server) from which to fetch the members
+	/// @param {function} callback The function to execute for the request's response.
+	static guildMembersGet = function(_guildId, _callback = -1){
+	    __discord_send_http_request_standard("guilds/" + _guildId + "/members", "GET", -1, __botToken, _callback);
+	}
+	
+	#endregion
+	
+	#region guildChannelsGet(guildId, [callback])
+	
+	/// @func guildChannelsGet(guildId, [callback])
+	/// @desc Fetches the channels of a server
+	/// @param {string} guildId The id of the guild (server) from which to fetch the channels
+	/// @param {function} callback The function to execute for the request's response.
+	static guildChannelsGet = function(_guildId, _callback = -1){
+	    __discord_send_http_request_standard("guilds/" + _guildId + "/channels", "GET", -1, __botToken, _callback);
+	}
+	
 	#endregion
 	
 	#region triggerTypingIndicator(channelId, [callback])
