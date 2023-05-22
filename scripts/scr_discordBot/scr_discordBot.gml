@@ -594,6 +594,8 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	
 	#region Gateway event functions
 	
+	#region interactionResponseSend(interactionId, interactionToken, callbackType, [content], [callback], [components], [embeds], [tts])
+	
 	/// @func interactionResponseSend(interactionId, interactionToken, callbackType, [content], [callback], [components], [embeds], [tts])
 	/// @desc Sends a response to the given Discord interaction.
 	/// @param {string} interactionId The id of the interaction you are responding to
@@ -605,15 +607,11 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	/// @param {array} embeds Array of embed structs, up to 10 rich embeds(up to 6000 characters). Default: -1
 	/// @param {bool} tts Whether or not the message content is text-to-speech. Default: false
 	function interactionResponseSend(_interactionId, _interactionToken, _callbackType, _content = "", _callback = -1, _components = -1, _embeds = -1, _tts = false){
-		// Prepare the url and headers
-		var _url = "https://discord.com/api/v10/interactions/" + _interactionId + "/" + _interactionToken + "/callback";
-		var _headers = ds_map_create();
-		ds_map_add(_headers, "Content-Type", "application/json");
-		ds_map_add(_headers, "Authorization", "Bot " + __botToken);
+		var _urlEndpoint = "interactions/" + _interactionId + "/" + _interactionToken + "/callback";
 
 		// Create a struct containing the response data
 		var _responseData = {
-			type: _callbackType, // 4 represents a response of type "MESSAGE_CONTENT" 
+			type: _callbackType, 
 			data: {}
 		};
 
@@ -633,36 +631,82 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 		if (_tts){
 			variable_struct_set(_responseData.data, "tts", true);			
 		}
-
-		// Stringify the _responseData struct
-		var _body = json_stringify(_responseData);
-
-		// Send the HTTP request
-		var _requestId = http_request(_url, "POST", _headers, _body);
-		__discord_add_request_to_sent(_requestId, _callback);
-
-		// Cleanup
-		ds_map_destroy(_headers);		
+	
+		__discord_send_http_request_standard(_urlEndpoint, "POST", _responseData, __botToken, _callback);
 	}
 	
-	/// presenceSend(activity, status)
-	/// @param activity
-	/// @param status
-	static presenceSend = function(_activities, _status) {
-	    var _payload = {
-	        op: GATEWAY_OP_CODE.presenceUpdate,
-	        d: {
-	            since: int64(date_current_datetime()),
-	            activities: _activities,
-	            status: _status,
-	            afk: false
-	        }
-	    };
-
-	    __gatewayEventSend(_payload);
-	}
-
+	#endregion
 	
+	#region interactionResponseEdit(interactionToken, [content], [callback], [components], [embeds], [attachments], [files])
+	
+	/// @func interactionResponseEdit(applicationId, interactionToken, [content], [callback], [components], [embeds], [attachments], [files])
+	/// @desc Edits the initial response to an Interaction. Must include at least one of the following: message, components, embeds, attachments, or files
+	/// @param {string} interactionToken The token for the Interaction
+	/// @param {string} content The new message content (Up to 2000 characters)
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	/// @param {array} components Array of message component structs to include with the message. Default: -1
+	/// @param {array} embeds Array of embed structs, up to 10 rich embeds(up to 6000 characters). Default: -1
+	/// @param {array} attachments Array of existing attachment objects to keep. Default: -1
+	/// @param {array} files Array of discordFile structs to send
+	/// @see messageEdit
+	static interactionResponseEdit = function(_interactionToken, _content = "", _callback = -1, _components = -1, _embeds = -1, _attachments = -1, _files = -1){
+		// Replace the url
+		var _endpointUrl = "webhooks/" + __applicationId + "/" + _interactionToken + "/messages/@original";
+		
+		// Create a struct containing the message data
+		var _bodyData = {};
+	
+		if (_content != ""){
+			variable_struct_set(_bodyData, "content", _content);	
+		}
+	
+		if (_components != -1){
+			variable_struct_set(_bodyData, "components", _components);		
+		}
+	
+		if (_embeds != -1){			
+			if (_files != -1){
+				//Assign ids to attachments
+				var _i = 0;
+			
+				var _fileArrayLength = array_length(_files);
+			
+				repeat(_fileArrayLength){
+					var _currentFile = _files[_i];
+				
+					_currentFile.__id = _i;
+					_i++;	
+				}
+			}
+			
+			// Add embeds to the _bodyData struct
+			variable_struct_set(_bodyData, "embeds", _embeds);           
+		}
+		
+		if (_attachments != -1){
+			variable_struct_set(_bodyData, "attachments", _attachments);		
+		}
+
+		 __discord_send_http_request_multipart(_endpointUrl, "PATCH", _bodyData, _files, __botToken, _callback);
+	}
+    
+	#endregion
+	
+	#region interactionResponseDelete(applicationId, interactionToken, [callback])
+	
+	/// @func interactionResponseDelete(applicationId, interactionToken, [callback])
+	/// @desc Deletes the initial response to an Interaction
+	/// @param {string} applicationId The id of the application
+	/// @param {string} interactionToken The token for the Interaction
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	static interactionResponseDelete = function(_applicationId, _interactionToken, _callback = -1){
+		// Prepare the url and headers
+		var _endpointUrl = "webhooks/" + _applicationId + "/" + _interactionToken + "/messages/@original";
+
+		__discord_send_http_request_standard(_endpointUrl, "DELETE", -1, __botToken, _callback);
+	}
+    #endregion
+
 	if (_useGatewayEvents){
 		var _url = "wss://gateway.discord.gg/?v=10&encoding=json";
 		__gatewaySocket = network_create_socket_ext(network_socket_wss, 443);
@@ -677,6 +721,7 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	__gatewaySequenceNumber = -1;
 	__gatewayResumeUrl = "";
 	__gatewaySessionId = ""
+	__gatewayNumberOfDisconnects = 0;
 	gatewayEventCallbacks = {};
 	
 	/// @func __gatewaySendHeartbeat()
@@ -687,12 +732,21 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 			d : (__gatewaySequenceNumber == -1) ? pointer_null : __gatewaySequenceNumber
 		};	
 
-		__gatewayEventSend(_payload);
-	
-		__gatewayHeartbeatCounter++;
+		var _bytesSent = __gatewayEventSend(_payload);
 		
-		if (!__gatewayIndentityHandshake && __gatewayHeartbeatCounter > 0){
-			__gatewaySendIdentity();	
+		if (_bytesSent > 0){	
+			__gatewayHeartbeatCounter++;
+		
+			if (!__gatewayIndentityHandshake && __gatewayHeartbeatCounter > 0){
+				__gatewaySendIdentity();	
+			}
+		}else{
+			__gatewayHeartbeatCounter = 0;	
+			var _url = "wss://gateway.discord.gg/?v=10&encoding=json";
+			__gatewaySocket = network_create_socket_ext(network_socket_wss, 443);
+			__gatewayConnection = network_connect_raw_async(__gatewaySocket, _url, 443);
+			__gatewayNumberOfDisconnects++;
+			__discordTrace("Connection to gateway lost: reconnecting...");
 		}
 	}
 	
@@ -724,8 +778,27 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 		var _payloadBuffer = buffer_create(0, buffer_grow, 1);
 		buffer_write(_payloadBuffer, buffer_string, _payloadString);
 		var _payloadBufferTrimmed = __trim_buffer(_payloadBuffer);
-		network_send_raw(__gatewaySocket, _payloadBufferTrimmed, buffer_get_size(_payloadBufferTrimmed), network_send_text);
+		//Returns the number of bytes sent or a number less than 0 if it failed
+		var _bytesSent = network_send_raw(__gatewaySocket, _payloadBufferTrimmed, buffer_get_size(_payloadBufferTrimmed), network_send_text);
 		buffer_delete(_payloadBufferTrimmed);		
+		return _bytesSent;
+	}
+	
+	/// presenceSend(activity, status)
+	/// @param activity
+	/// @param status
+	static presenceSend = function(_activities, _status) {
+	    var _payload = {
+	        op: GATEWAY_OP_CODE.presenceUpdate,
+	        d: {
+	            since: int64(date_current_datetime()),
+	            activities: _activities,
+	            status: _status,
+	            afk: false
+	        }
+	    };
+
+	    __gatewayEventSend(_payload);
 	}
 	
 	#endregion	
@@ -745,7 +818,7 @@ enum DISCORD_BUTTON_STYLE {
     link = 5
 }
 	
-enum DISCORD_INTERATION_TYPE {
+enum DISCORD_INTERACTION_TYPE {
 	ping = 1,
 	applicationCommand,
 	messageComponent,
@@ -847,8 +920,8 @@ function discordGuildCommand(_name, _description, _type, _options, _defaultMembe
     nsfw = _nsfw;
 }
 
-/// @func discordCommandOption(type, name, description, required, choices, options, channelTypes, minValue, maxValue,_minLength, maxLength, autocomplete)
-/// @desc Constructs a new discordCommandOption object.
+/// @func discordCommandOption(type, name, description, required, [choices], [options], [channelTypes], [minValue], [maxValue], [minLength], [maxLength], [autocomplete])
+/// @desc Constructs a new discordCommandOption struct.
 /// @param {number} type - The type of the option. Use the enum DISCORD_COMMAND_OPTION_TYPE
 /// @param {string} name - The name of the option.
 /// @param {string} description - The description of the option.
@@ -860,20 +933,44 @@ function discordGuildCommand(_name, _description, _type, _options, _defaultMembe
 /// @param {number} maxValue - The maximum value for the option.
 /// @param {number} minLength - The minimum length for the option.
 /// @param {number} maxLength - The maximum length for the option.
-/// @param {boolean} _autocomplete - Whether autocomplete is enabled for the option.
-function discordCommandOption(_type, _name, _description, _required, _choices, _options, _channelTypes, _minValue, _maxValue, _minLength, _maxLength, _autocomplete) constructor {
+/// @param {boolean} autocomplete - Whether autocomplete is enabled for the option.
+function discordCommandOption(_type, _name, _description, _required, _choices = -1, _options = -1, _channelTypes = -1, _minValue = infinity, _maxValue = infinity, _minLength  = infinity, _maxLength = infinity, _autocomplete = false) constructor {
     type = _type;
     name = _name;
     description = _description;
     required = _required;
-    choices = _choices;
-    options = _options;
-    channelTypes = _channelTypes;
-    minValue = _minValue;
-    maxValue = _maxValue;
-    minLength = _minLength;
-    maxLength = _maxLength;
-    autocomplete = _autocomplete;
+    
+	if (_choices != -1){
+		choices = _choices;
+	}
+	
+	if (_options != -1){
+		options = _options;
+	}
+	
+    if (_channelTypes != -1){
+		channelTypes = _channelTypes;
+	}
+	
+	if (_minValue != infinity){
+		minValue = _minValue;
+	}
+	
+	if (_maxValue != infinity){
+		maxValue = _maxValue;
+	}
+	
+	if (_minLength != infinity){
+		minLength = _minLength;
+	}
+	
+	if (_maxLength != infinity){
+		maxLength = _maxLength;
+	}
+    
+	if (_autocomplete){
+		autocomplete = _autocomplete;
+	}
 }
 
 /// @func discordMessageComponent(type, [style], [label], [emoji], [customId], [url], [options])

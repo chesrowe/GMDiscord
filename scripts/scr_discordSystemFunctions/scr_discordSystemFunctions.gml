@@ -256,6 +256,62 @@ function __discord_send_http_request_standard(_endpoint, _requestMethod, _reques
 	ds_map_destroy(_headers);	
 }
 
+/// @desc Sends a multipart/form-data http request to the Discord API
+/// @param {string} endpoint The endpoint to complete the request url
+/// @param {string} requestMethod The type of http request being sent such as "POST", "PATCH", or "DELETE"
+/// @param {struct} requestBody The struct containing the datafor the request body. Use -1 when sending no body.
+/// @param {array} files Array of file structs to send, each must contain __filePath and __fileName.
+/// @param {string} botToken The token for the bot that is sending the request
+/// @param {function} callback The function to execute when a response to the request is received
+function __discord_send_http_request_multipart(_endpoint, _requestMethod, _requestBody, _files, _botToken, _callback = -1){
+    // Prepare the url and headers
+    var _baseUrl = "https://discord.com/api/v10/" + _endpoint;
+    var _boundary = "----GMLBoundary" + string(random(1000000000));
+    var _headers = ds_map_create();
+    ds_map_add(_headers, "Content-Type", "multipart/form-data; boundary=" + _boundary);
+    ds_map_add(_headers, "Authorization", "Bot " + _botToken);
+
+    // Create the multipart/form-data body content
+    var _body = "";
+    if (_requestBody != -1){
+        _body += "--" + _boundary + "\r\n";
+        _body += "Content-Disposition: form-data; name=\"payload_json\"\r\n";
+        _body += "Content-Type: application/json\r\n\r\n";
+        _body += json_stringify(_requestBody) + "\r\n";
+    }
+
+    // Add files to the multipart/form-data body
+    if (_files != -1 && is_array(_files)){
+        var _i = 0;
+        var _filesArrayLength = array_length(_files);
+    
+        repeat(_filesArrayLength){
+            var _currentFile = _files[_i];
+            var _fileBuffer = buffer_load(_currentFile.__filePath);
+            var _fileBase64 = buffer_base64_encode(_fileBuffer, 0, buffer_get_size(_fileBuffer));
+            buffer_delete(_fileBuffer);
+        
+            _body += "--" + _boundary + "\r\n";
+            _body += "Content-Disposition: form-data; name=\"files[" + string(_i) + "]\"; filename=\"" + _currentFile.__fileName + "\"\r\n";
+            _body += "Content-Type: " + "image/png" + "\r\n";
+            _body += "Content-Transfer-Encoding: base64\r\n\r\n";
+            _body += _fileBase64 + "\r\n";
+        
+            _i++;   
+        }
+    }
+    
+    _body += "--" + _boundary + "--\r\n";
+
+    // Send the HTTP request
+    var _requestId = http_request(_baseUrl, _requestMethod, _headers, _body);
+    __discord_add_request_to_sent(_requestId, _callback);
+
+    // Cleanup
+    ds_map_destroy(_headers);
+}
+
+
 
 
 

@@ -2,7 +2,6 @@ global.__heartbeatCounter = 0;
 global.__indentityHandshake = false;
 global.__gatewaySequenceNumber = -1;
 
-
 enum GATEWAY_OP_CODE {
 	dispatch = 0,
 	heartbeat = 1,
@@ -26,7 +25,7 @@ enum DISCORD_PRESENCE_ACTIVITY {
 	competing
 }
 
-enum DISCORD_INTERATION_CALLBACK_TYPE {
+enum DISCORD_INTERACTION_CALLBACK_TYPE {
 	channelMessageWithSource = 4,
 	deferredChannelMessageWithSource = 5,
 	deferredUpdateMessage = 6,

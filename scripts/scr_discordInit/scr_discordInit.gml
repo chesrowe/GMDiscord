@@ -5,4 +5,4 @@ var _createController = function(){
 
 var _controllerCreationTimeSource = time_source_create(time_source_global, 1, time_source_units_frames, _createController);
 
-time_source_start(_controllerCreationTimeSource);
+//time_source_start(_controllerCreationTimeSource);
