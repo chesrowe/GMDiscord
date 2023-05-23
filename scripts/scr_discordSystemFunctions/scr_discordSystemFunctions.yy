@@ -5,7 +5,7 @@
   "isDnD": false,
   "isCompatibility": false,
   "parent": {
-    "name": "GMDiscord",
-    "path": "folders/Libraries/GMDiscord.yy",
+    "name": "System",
+    "path": "folders/GMDiscord/System.yy",
   },
 }

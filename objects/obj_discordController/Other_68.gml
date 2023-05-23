@@ -2,6 +2,11 @@
 var _data = async_load;
 var _socketId = _data[? "id"];
 
+/* 
+   Here we are looping through each bot and seeing which one had a gateway event fire.
+   Once we find the responible bot via its _socketId, we process the event accordingly
+*/
+
 var _i = 0;
 
 repeat(array_length(obj_discordController.botArray)){
@@ -11,30 +16,34 @@ repeat(array_length(obj_discordController.botArray)){
 		/// Async Networking event
 		switch (async_load[? "type"]) {
 			case network_type_connect:
-				//IDK
+				//This event never seems to be triggered
+				__discordTrace("Connected!");
 		        break;
 			
 			case network_type_disconnect:
+				//Doesn't ever get triggered 
 				var _url = "wss://gateway.discord.gg/?v=10&encoding=json";
 				_currentBot.__gatewaySocket = network_create_socket_ext(network_socket_wss, 443);
 				_currentBot.__gatewayConnection = network_connect_raw_async(_currentBot.__gatewaySocket, _url, 443);
-				show_message("DISCONNECTED");
+				__discordTrace("DISCONNECTED");
 				break;
 
 			case network_type_data:
-				var _receivedData = __discord_gateWay_event_parse();
+				var _receivedData = discord_gateWay_event_parse();
 		
 				// Store the sequence number if it exists
 				if (_receivedData.s != pointer_null) {
-				    global.__gatewaySequenceNumber = _receivedData.s;
+					var _tester = 0;
+				    _currentBot.__gatewaySequenceNumber = _receivedData.s;
 				}
 
 				// Event Handling
 				switch (_receivedData.op){
-				    case GATEWAY_OP_CODE.hello:
+				    //This event is the first event that is received. For setting up an initial heartbeat with the gateway
+					case DISCORD_GATEWAY_OP_CODE.hello:
 						_currentBot.__gatewaySendHeartbeat();
 				        var _heartbeatInterval = floor(_receivedData.d.heartbeat_interval / 1000);  // Convert ms to seconds
-						show_debug_message(_heartbeatInterval);
+						__discordTrace("Heartbeat interval: " + string(_heartbeatInterval));
 						//Create a Time Source to send heartbeats
 						var _heartbeatTimeSource = time_source_create(
 					        time_source_global,
@@ -47,24 +56,44 @@ repeat(array_length(obj_discordController.botArray)){
 				        time_source_start(_heartbeatTimeSource);					
 				        break;
 				
-					case GATEWAY_OP_CODE.heartbeatACK:
+					//Discord acknowledges each heartbeat sent over the gateway
+					case DISCORD_GATEWAY_OP_CODE.heartbeatACK:
 						__discordTrace("Heartbeat received");
 						break;
 				
-					case GATEWAY_OP_CODE.heartbeat:
+					//Heartbeats must be sent if requested
+					case DISCORD_GATEWAY_OP_CODE.heartbeat:
 						__discordTrace("Heatbeat required");
 						_currentBot.__gatewaySendHeartbeat();
 						break;
+						
+					//attempt to reconnect and resume 
+					case DISCORD_GATEWAY_OP_CODE.reconnect:
+						__discordTrace("Reconnect required, attempting...");
+						_currentBot.__gatewaySocket = network_create_socket_ext(network_socket_wss, 443);
+						_currentBot.__gatewayConnection = network_connect_raw_async(_currentBot.__gatewaySocket, _currentBot.__gatewayResumeUrl + "?v=10&encoding=json", 443);
+						break;
 				
-					case GATEWAY_OP_CODE.dispatch:
+					//Identity handshakes and normal gateway events sent from your discord app
+					case DISCORD_GATEWAY_OP_CODE.dispatch:
 						if (is_string(_receivedData.t)){
-							__discordTrace(_receivedData.t);
-							switch (_receivedData.t){
+							var _eventName = _receivedData.t; 
+							var _eventData = _receivedData.d;
+							__discordTrace(_eventName);
+							
+							switch (_eventName){
+								/*
+								   Before your app can start receiving gateway events, an indentity handshake must be performed.
+								   This response confirms the handshake has succeeded.
+								*/
 								case "READY":
 									_currentBot.__gatewayIndentityHandshake = true;
+									_currentBot.__gatewayResumeUrl = _eventData.resume_gateway_url;
+									_currentBot.__gatewaySessionId = _eventData.session_id;
 									__discordTrace("Identity handshake complete");
 									break;
 								
+								//This executes the callbacks for events defined in the gatewayEventCallback struct for your bot
 								default: 
 									if (variable_struct_exists(_currentBot.gatewayEventCallbacks, _receivedData.t)){
 										var _callback = _currentBot.gatewayEventCallbacks[$	_receivedData.t];

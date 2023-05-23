@@ -6,6 +6,6 @@
   "isCompatibility": false,
   "parent": {
     "name": "GMDiscord",
-    "path": "folders/Libraries/GMDiscord.yy",
+    "path": "folders/GMDiscord.yy",
   },
 }
