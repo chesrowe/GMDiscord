@@ -373,7 +373,7 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	/// @param {string} emoji The url-encoded emoji to remove
 	/// @param {function} callback The function to execute for the request's response. Default: -1
 	static messageReactionDelete = function(_channelId, _messageId, _emoji, _callback = -1){
-		__discord_send_http_request_standard("channels/" + _channelId + "/messages/" + _messageId + "/reactions/" + _emoji + "/@me", "DELETE", -1, __botToken, _callback);
+		__discord_send_http_request_standard("channels/" + _channelId + "/messages/" + _messageId + "/reactions/" + __url_encode(_emoji) + "/@me", "DELETE", -1, __botToken, _callback);
 	}
 
 	#endregion
@@ -706,6 +706,62 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 		__discord_send_http_request_standard(_endpointUrl, "DELETE", -1, __botToken, _callback);
 	}
     #endregion
+	
+	#region interactionResponseFollowUp(interactionToken, content, [callback], [components], [embeds], [attachments], [files])
+	
+	/// @func interactionResponseFollowUp(applicationId, interactionToken, content, [callback], [components], [embeds], [attachments], [files])
+	/// @desc Sends a new follow-up message to an Interaction. Must include a message.
+	/// @param {string} interactionToken The token for the Interaction
+	/// @param {string} content The new message content (Up to 2000 characters)
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	/// @param {array} components Array of message component structs to include with the message. Default: -1
+	/// @param {array} embeds Array of embed structs, up to 10 rich embeds(up to 6000 characters). Default: -1
+	/// @param {array} attachments Array of existing attachment objects to keep. Default: -1
+	/// @param {array} files Array of discordFile structs to send
+	/// @see messageEdit
+	static interactionResponseFollowUp = function(_interactionToken, _content, _callback = -1, _components = -1, _embeds = -1, _attachments = -1, _files = -1){
+		// Replace the url
+		var _endpointUrl = "webhooks/" + __applicationId + "/" + _interactionToken;
+		
+		// Create a struct containing the message data
+		var _bodyData = {};
+	
+		if (_content != ""){
+			variable_struct_set(_bodyData, "content", _content);	
+		}
+	
+		if (_components != -1){
+			variable_struct_set(_bodyData, "components", _components);		
+		}
+	
+		if (_embeds != -1){			
+			if (_files != -1){
+				//Assign ids to attachments
+				var _i = 0;
+			
+				var _fileArrayLength = array_length(_files);
+			
+				repeat(_fileArrayLength){
+					var _currentFile = _files[_i];
+				
+					_currentFile.__id = _i;
+					_i++;	
+				}
+			}
+			
+			// Add embeds to the _bodyData struct
+			variable_struct_set(_bodyData, "embeds", _embeds);           
+		}
+		
+		if (_attachments != -1){
+			variable_struct_set(_bodyData, "attachments", _attachments);		
+		}
+
+		 __discord_send_http_request_multipart(_endpointUrl, "POST", _bodyData, _files, __botToken, _callback);
+	}
+	
+    #endregion
+
 
 	if (_useGatewayEvents){
 		var _url = "wss://gateway.discord.gg/?v=10&encoding=json";

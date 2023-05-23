@@ -33,6 +33,6 @@
   "overriddenProperties": [],
   "parent": {
     "name": "GMDiscord",
-    "path": "folders/GMDiscord.yy",
+    "path": "folders/Libraries/GMDiscord.yy",
   },
 }
