@@ -108,8 +108,6 @@ enum DISCORD_PERMISSIONS {
     sendVoiceMessages = 0x0000400000000000
 }
 
-
-
 enum DISCORD_PRESENCE_ACTIVITY {
 	game,
 	streaming,
@@ -132,4 +130,23 @@ enum DISCORD_INTERACTION_CALLBACK_TYPE {
 	applicationCommandAutocompleteResult = 8,//respond to an autocomplete interaction with suggested choices
 	modal = 9                                //respond to an interaction with a popup modal
 }
+
+/* https://discord.com/developers/docs/resources/channel#channel-object-channel-types
+   Used for specifying the type of channel in a Discord server
+*/
+enum DISCORD_CHANNEL_TYPE {
+	guildText = 0,                          // a text channel within a server
+	dm = 1,                                 // a direct message between users
+	guildVoice = 2,                         // a voice channel within a server
+	groupDm = 3,                            // a direct message between multiple users
+	guildCategory = 4,                      // an organizational category that contains up to 50 channels
+	guildAnnouncement = 5,                  // a channel that users can follow and crosspost into their own server (formerly news channels)
+	announcementThread = 10,                // a temporary sub-channel within a GUILD_ANNOUNCEMENT channel
+	publicThread = 11,                      // a temporary sub-channel within a GUILD_TEXT or GUILD_FORUM channel
+	privateThread = 12,                     // a temporary sub-channel within a GUILD_TEXT channel that is only viewable by those invited and those with the MANAGE_THREADS permission
+	guildStageVoice = 13,                   // a voice channel for hosting events with an audience
+	guildDirectory = 14,                    // the channel in a hub containing the listed servers
+	guildForum = 15                         // Channel that can only contain threads
+}
+
 

@@ -80,63 +80,6 @@ function discordCommandOption(_type, _name, _description, _required, _choices = 
 	}
 }
 
-/// @func discordMessageComponent(type, [style], [label], [emoji], [customId], [url], [options])
-/// @desc Creates a new Discord message component.
-/// @param {enum.ComponentType} type - The component type (ActionRow, Button, SelectMenu).
-/// @param {enum.ButtonStyle} style - The button style (Primary, Secondary, Success, Danger, Link).
-/// @param {string} label - The visible text on the button.
-/// @param {struct.emoji} emoji - The emoji object with "name", "id", and "animated" properties.
-/// @param {string} customId - The custom identifier for the component.
-/// @param {string} url - The URL for the Link button style (Link).
-/// @param {Array} components Array of sub-components
-/// @param {Array} options - The options for the Select Menu component (array of discordMessageComponent structs with "label", "value", "description", "emoji", and "default" properties).
-function discordMessageComponent(_type, _style = -1, _label = "", _emoji = -1, _customId = "id", _url = "", _components = -1, _options = -1) constructor {
-    // Component type (ActionRow, Button, SelectMenu)
-    type = _type;
-
-    // Button Style (Primary, Secondary, Success, Danger, Link)
-	if (_style != -1){
-		style = _style;
-	}
-
-    // Button Label (visible text on the button)
-    label = _label;
-
-    // Emoji object with "name", "id", and "animated" properties
-	if (_emoji != -1){
-		emoji = _emoji;
-	}
-
-    // Custom identifier for the component
-    custom_id = _customId;
-
-    // URL for Link button style (Link)
-    if (_url != ""){
-		url = _url;
-	}
-	
-	// Sub-components
-	if (_components != -1){
-		components = _components;
-	}
-
-    // Options for the Select Menu component (array of discordMessageComponentOption structs 
-	if (_options != -1){
-		options = _options;
-	}
-}
-
-/// @func discordMessageComponentOption(label, value, description, emoji);
-function discordMessageComponentOption(_label, _value = "", _description = "", _emoji = -1) constructor {
-	label = _label;
-	value = _value; 
-	description = _description; 
-	
-	if (_emoji != -1){
-		emoji = _emoji;	
-	}
-}
-
 /// @func discordEmoji(name, [id], [animated])
 /// @desc A emoji data object used in message components
 /// @param {string} name The emoji like: "🔥"

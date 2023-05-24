@@ -23,6 +23,7 @@ repeat(array_length(obj_discordController.botArray)){
 			case network_type_disconnect:
 				//Doesn't ever get triggered 
 				var _url = "wss://gateway.discord.gg/?v=10&encoding=json";
+				network_destroy(_currentBot.__gatewaySocket);
 				_currentBot.__gatewaySocket = network_create_socket_ext(network_socket_wss, 443);
 				_currentBot.__gatewayConnection = network_connect_raw_async(_currentBot.__gatewaySocket, _url, 443);
 				__discordTrace("DISCONNECTED");
@@ -70,6 +71,7 @@ repeat(array_length(obj_discordController.botArray)){
 					//attempt to reconnect and resume 
 					case DISCORD_GATEWAY_OP_CODE.reconnect:
 						__discordTrace("Reconnect required, attempting...");
+						network_destroy(_currentBot.__gatewaySocket);
 						_currentBot.__gatewaySocket = network_create_socket_ext(network_socket_wss, 443);
 						_currentBot.__gatewayConnection = network_connect_raw_async(_currentBot.__gatewaySocket, _currentBot.__gatewayResumeUrl + "?v=10&encoding=json", 443);
 						break;
