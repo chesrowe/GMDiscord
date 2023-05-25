@@ -4,7 +4,7 @@
  - Read the docs [here](https://github.com/chesrowe/GMDiscord/wiki/discordBot())
  
 ## Installation 
-- Download the latest release and import `GMDiscord.yymps` into your project.
+- Download the [latest release](https://github.com/chesrowe/GMDiscord/releases/latest) and import `GMDiscord.yymps` into your project.
 - Put the object `obj_discordController` into your first room (it is persistant and needs to be present to handle gateway events)
 
 ## Examples
