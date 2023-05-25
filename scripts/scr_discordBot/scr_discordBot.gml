@@ -440,10 +440,11 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	/// @func guildCommandCreate(guildId, commandData, [callback])
 	/// @desc Registers a new command for a guild
 	/// @param {string} guildId The id of the guild where the command will be registered
-	/// @param {struct.discordGuildCommand} commandData Struct containing the command's name, description, and options
-	static guildCommandCreate = function(_guildId, _commandData, _callback = -1){
+	/// @param {struct.discordGuildCommand} discordGuildCommand Struct containing the command's name, description, and options
+	/// @param {function} callback Optional callback function to execute for the request's response
+	static guildCommandCreate = function(_guildId, _command, _callback = -1){
 	    var _urlEndpoint = "applications/" + __applicationId + "/guilds/" + _guildId + "/commands";
-	    __discord_send_http_request_standard(_urlEndpoint, "POST", _commandData, __botToken, _callback);
+	    __discord_send_http_request_standard(_urlEndpoint, "POST", _command, __botToken, _callback);
 	}
 
 	#endregion
@@ -490,55 +491,93 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 
 	#endregion
 	
-	#region guildMemberBan(guildId, userId, [deleteMessageDays], [reason], [callback])
+	#region guildMemberBan(guildId, userId, [callback], [deleteMessageSeconds], [reason])
 	
-	/// @func guildMemberBan(guildId, userId, [deleteMessageDays], [reason], [callback])
+	/// @func guildMemberBan(guildId, userId, [callback], [deleteMessageDays], [reason])
 	/// @desc Bans a guild member
 	/// @param {string} guildId The id of the guild
 	/// @param {string} userId The id of the user to ban
-	/// @param {real} deleteMessageDays Number of days to delete messages for (0-7). Default: 0
-	/// @param {string} reason The reason for the ban. Default: ""
 	/// @param {function} callback The function to execute for the request's response. 
-	static guildMemberBan = function(_guildId, _userId, _deleteMessageDays = 0, _reason = "", _callback = -1){
+	/// @param {real} deleteMessageSeconds number of seconds to delete messages for, between 0 and 604800 (7 days) Default: 0
+	/// @param {string} reason The reason for the ban. Default: ""
+	static guildMemberBan = function(_guildId, _userId,  _callback = -1, _deleteMessageSeconds = 0, _reason = ""){
 		var _urlEndpoint = "guilds/" + _guildId + "/bans/" + _userId;
 		var _bodyData = {
-			delete_message_days: _deleteMessageDays,
-			reason: _reason
+			delete_message_seconds: _deleteMessageSeconds,
 		};
 		
-		__discord_send_http_request_standard(_urlEndpoint, "PUT", _bodyData, __botToken, _callback);
+		var _additonalHeaders = -1;
+		
+		if (_reason != ""){
+			_additonalHeaders = ds_map_create();
+			_additonalHeaders[? "X-Audit-Log-Reason"] = _reason;
+		}
+		
+		__discord_send_http_request_standard(_urlEndpoint, "PUT", _bodyData, __botToken, _callback, _additonalHeaders);
+		
+		ds_map_destroy(_additonalHeaders);
+	}
+
+	#endregion
+	
+	#region guildMemberBanGet(guildId, userId, [callback])
+	
+	/// @func guildMemberBanGet(guildId, userId, [callback])
+	/// @desc Gets a previously banned user's `ban object`
+	/// @param {string} guildId The id of the guild the user was banned in
+	/// @param {string} userId The id of the ban that has been previously banned
+	/// @param {function} callback The function to execute for the request's response. 
+	static guildMemberBanGet = function(_guildId, _userId,  _callback = -1){
+		var _urlEndpoint = "guilds/" + _guildId + "/bans/" + _userId;
+		
+		__discord_send_http_request_standard(_urlEndpoint, "GET", -1, __botToken, _callback);
 	}
 
 	#endregion
 	
 	#region guildMemberUnban(guildId, userId, [callback])
 	
-	/// @func guildMemberUnban(guildId, userId, [callback])
+	/// @func guildMemberUnban(guildId, userId, [callback], [reason])
 	/// @desc Unbans a guild member
 	/// @param {string} guildId The id of the guild
 	/// @param {string} userId The id of the user to unban
 	/// @param {function} callback The function to execute for the request's response. 
-	static guildMemberUnban = function(_guildId, _userId, _callback = -1){
+	/// @param {string} reason The reason that the member is being unbanned. 
+	static guildMemberUnban = function(_guildId, _userId, _callback = -1, _reason = ""){
 		var _urlEndpoint = "guilds/" + _guildId + "/bans/" + _userId;
 		
-		__discord_send_http_request_standard(_urlEndpoint, "DELETE", -1, __botToken, _callback);
+		var _bodyData = {};
+		
+		var _additonalHeaders = -1;
+		
+		if (_reason != ""){
+			_additonalHeaders = ds_map_create();
+			_additonalHeaders[? "X-Audit-Log-Reason"] = _reason;
+		}
+		
+		__discord_send_http_request_standard(_urlEndpoint, "DELETE", _bodyData, __botToken, _callback);
 	}
 
 	#endregion
 	
-	#region guildMemberKick(guildId, userId, [reason], [callback])
+	#region guildMemberKick(guildId, userId, [callback], [reason])
 	
-	/// @func guildMemberKick(guildId, userId, [reason], [callback])
+	/// @func guildMemberKick(guildId, userId, [callback], [reason])
 	/// @desc Kicks a guild member
 	/// @param {string} guildId The id of the guild
 	/// @param {string} userId The id of the user to kick
+	/// @param {function} callback The function to execute for the request's response. 	
 	/// @param {string} reason The reason for the kick. Default: ""
-	/// @param {function} callback The function to execute for the request's response. 
-	static guildMemberKick = function(_guildId, _userId, _reason = "", _callback = -1){
+	static guildMemberKick = function(_guildId, _userId, _callback = -1, _reason = ""){
 		var _urlEndpoint = "guilds/" + _guildId + "/members/" + _userId;
-		var _bodyData = {
-			reason: _reason
-		};
+		var _bodyData = {};
+		
+		var _additonalHeaders = -1;
+		
+		if (_reason != ""){
+			_additonalHeaders = ds_map_create();
+			_additonalHeaders[? "X-Audit-Log-Reason"] = _reason;
+		}
 		
 		__discord_send_http_request_standard(_urlEndpoint, "DELETE", _bodyData, __botToken, _callback);
 	}
@@ -726,7 +765,6 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	/// @param {array} embeds Array of embed structs, up to 10 rich embeds(up to 6000 characters). Default: -1
 	/// @param {array} attachments Array of existing attachment objects to keep. Default: -1
 	/// @param {array} files Array of discordFile structs to send
-	/// @see messageEdit
 	static interactionResponseFollowUp = function(_interactionToken, _content, _callback = -1, _components = -1, _embeds = -1, _attachments = -1, _files = -1){
 		// Replace the url
 		var _endpointUrl = "webhooks/" + __applicationId + "/" + _interactionToken;
@@ -772,8 +810,8 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 
 	#region presenceSend(activity, status)
 	
-	/// presenceSend(activity, status)
-	/// Updates a bot's presence
+	/// @func presenceSend(activity, status)
+	/// @desc Updates a bot's presence
 	/// @param activity
 	/// @param status
 	static presenceSend = function(_activities, _status) {
@@ -813,6 +851,7 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 		}else{
 			__gatewayHeartbeatCounter = 0;	
 			var _url = "wss://gateway.discord.gg/?v=10&encoding=json";
+			network_destroy(__gatewaySocket);
 			__gatewaySocket = network_create_socket_ext(network_socket_wss, 443);
 			__gatewayConnection = network_connect_raw_async(__gatewaySocket, _url, 443);
 			__gatewayNumberOfDisconnects++;

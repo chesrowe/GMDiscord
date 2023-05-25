@@ -2,7 +2,7 @@
    Below are the most important ones, although not all are present yet and some arguments requiring a JSON object may need to be passed as a struct created on the spot.
 */
 
-/// @func discordGuildCommand(name, description, type, options, defaultMemberPermissions, [dmPermission], [defaultPermission], [nsfw])
+/// @func discordGuildCommand(name, description, type, [options], [defaultMemberPermissions], [dmPermission], [defaultPermission], [nsfw])
 /// @desc Constructs a new guildCommand object.
 /// @param {string} name The name of the command.
 /// @param {string} description The description of the command.
@@ -12,7 +12,7 @@
 /// @param {bool} dmPermission Whether the command is available in DMs.
 /// @param {bool} defaultPermission Whether the command is enabled by default.
 /// @param {bool} nsfw Whether the command is age-restricted.
-function discordGuildCommand(_name, _description, _type, _options, _defaultMemberPermissions, _dmPermission = true, _defaultPermission = true, _nsfw = false) constructor {
+function discordGuildCommand(_name, _description, _type, _options = [], _defaultMemberPermissions = DISCORD_PERMISSIONS.administrator, _dmPermission = true, _defaultPermission = true, _nsfw = false) constructor {
     name = _name;
     description = _description;
     type = _type;

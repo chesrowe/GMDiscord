@@ -104,7 +104,7 @@ function discordMessageComponentSelectMenu(_type, _customId, _options = [], _cha
 	}
 }
 
-/// @func discordMessageComponentSelectOption(label, [value], [description], [emoji], [default]);
+/// @func discordMessageComponentSelectOption(label, [value], [description], [emoji], [default])
 function discordMessageComponentSelectOption(_label, _value = "", _description = "", _emoji = -1, _default = false) constructor {
 	label = _label;
 	value = _value; 

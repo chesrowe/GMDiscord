@@ -1,3 +1,76 @@
+/// @function __discord_response_is_error(jsonString)
+/// @description Check if a response from the Discord API is an error message.
+/// @param jsonString The JSON string to check.
+/// @returns Whether the response represents an error.
+function __discord_response_is_error(_responseJson) {
+   if (!is_string(_responseJson)){
+		return false;   
+   }
+   
+   if (_responseJson == ""){
+		return false;   
+   }
+   
+   // Parse the JSON string.
+    try {
+		var _response = json_parse(_responseJson);
+
+	    // Check if the 'code' and 'errors' keys are present in the response.
+	    if (variable_struct_exists(_response, "code") || variable_struct_exists(_response, "errors")) {
+	       // If both keys are present, the response is an error message.
+	        return true;
+	    }else{
+	        // If either key is missing, the response is not an error message.
+	        return false;
+	    }
+	}catch(_error){
+		__discordTrace("Error: Response is a string but cannot be parsed: " + string(_responseJson));	
+	}
+}
+
+/// @Func __discord_error_print(json)
+/// @param {string} discordResponse The JSON response from the Discord API
+function __discord_error_print(_discordResponse){
+    var _error = json_parse(_discordResponse);
+	var _errorMessageToOutput = "Something is wrong with your HTTP request!\n"; 
+    
+    // Check if the main error fields exist
+    if (variable_struct_exists(_error, "code") && variable_struct_exists(_error, "message")) {
+        _errorMessageToOutput += "Error Code: " + string(_error.code) + "\n";
+        _errorMessageToOutput += "Message: " + _error.message  + "\n";
+    }
+    
+    // Check if the 'errors' object exists
+    if (variable_struct_exists(_error, "errors")) {
+        var _errorDetails = _error.errors;
+        
+        // Iterate over the keys in the 'errors' struct
+        var _keys = variable_struct_get_names(_errorDetails);
+        for (var i = 0; i < array_length(_keys); i++) {
+            var _key = _keys[i];
+            var _detail = variable_struct_get(_errorDetails, _key);
+            
+            // Check if the detail error fields exist
+            if (variable_struct_exists(_detail, "_errors")) {
+                var _errorsArray = _detail._errors;
+                
+                // Iterate over the errors in the '_errors' array
+                for (var j = 0; j < array_length(_errorsArray); j++) {
+                    var _errorItem = _errorsArray[j];
+                    
+                    // Check if the error item fields exist
+                    if (variable_struct_exists(_errorItem, "code") && variable_struct_exists(_errorItem, "message")) {
+                        _errorMessageToOutput += "Detail Error Code: " + string(_errorItem.code) + "\n";
+                        _errorMessageToOutput += "Detail Message: " + _errorItem.message + "\n";
+                    }
+                }
+            }
+        }
+    }
+	
+	__discordTrace(_errorMessageToOutput);
+}
+
 /// @func __discord_add_request_to_sent(requestId,[callback])
 /// @desc Adds a new http request to the requestCallbacks array in the Discord controller object
 /// @param {real} requestId The id returned by http_request() 
@@ -230,12 +303,25 @@ function __discordTrace(_text){
 /// @param {struct} requestBody The struct containing the datafor the request body. Use -1 when sending no body.
 /// @param {string} botToken The token for the bot that is sending the request
 /// @param {function} callback The function to execute when a response to the request is received
-function __discord_send_http_request_standard(_endpoint, _requestMethod, _requestBody, _botToken, _callback = -1){
+function __discord_send_http_request_standard(_endpoint, _requestMethod, _requestBody, _botToken, _callback = -1, _additionalHeaders = -1){
 	// Prepare the url and headers
 	var _baseUrl = "https://discord.com/api/v10/" + _endpoint;
 	var _headers = ds_map_create();
 	ds_map_add(_headers, "Content-Type", "application/json");
 	ds_map_add(_headers, "Authorization", "Bot " + _botToken);
+	
+	//Add additional headers that the endpoint might support
+	if (_additionalHeaders != -1){
+		var _headerNames = ds_map_keys_to_array(_additionalHeaders);
+		
+		var _i = 0;
+		
+		repeat(array_length(_headerNames)){
+			var _currentHeaderName = _headerNames[_i];
+			ds_map_add(_headers, _currentHeaderName, _additionalHeaders[? _currentHeaderName]);	
+			_i++;	
+		}
+	}
 
 	// Send the HTTP request
 	var _bodyJson = (_requestBody != -1) ? json_stringify(_requestBody) : "";
