@@ -12,9 +12,9 @@ var _userId = "1101162577725227108"
 
 // Define the callback function to handle the response
 var _callback = function() {
-    show_debug_message("Request Success.");
+    show_debug_message("The request responded!");
 };
 
 // Call the method
-myBot.guildMemberKick(_guildId, _userId, _callback, "CAUSE FUCK IT");
+myBot.guildChannelsGet(_guildId, _callback);
 

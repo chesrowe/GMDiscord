@@ -16,7 +16,11 @@ function __discord_response_is_error(_responseJson) {
 		var _response = json_parse(_responseJson);
 
 	    // Check if the 'code' and 'errors' keys are present in the response.
-	    if (variable_struct_exists(_response, "code") || variable_struct_exists(_response, "errors")) {
+	    if (is_array(_response)){
+			return false;	
+		}
+		
+		if (variable_struct_exists(_response, "code") || variable_struct_exists(_response, "errors")) {
 	       // If both keys are present, the response is an error message.
 	        return true;
 	    }else{

@@ -120,6 +120,8 @@ function json_pretty_print(_jsonString) {
 
         _lastChar = _currentChar;
     }
+	
+	_result = string_replace_all(_result, "\\", "");
 
     return _result;
 }
