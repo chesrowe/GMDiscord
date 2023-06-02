@@ -56,7 +56,7 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 		        // Find any instances of attachment URLs in the embeds
 			    var _authorAttachments = __discord_find_attachments(_embeds, "author", "icon_url", _files);
 				var _footerAttachments = __discord_find_attachments(_embeds, "footer", "icon_url", _files);
-			    var _attachments = array_merge(_authorAttachments, _footerAttachments);
+			    var _attachments = __discord_array_merge(_authorAttachments, _footerAttachments);
 
 			    // Add attachments to the _bodyData struct
 			    if (array_length(_attachments) > 0) {
@@ -75,49 +75,8 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 		if (_tts){
 			variable_struct_set(_bodyData, "tts", true);			
 		}
-
-		// Create the multipart/form-data body content
-		var _body = "";
 	
-		if (variable_struct_exists(_bodyData, "content") || variable_struct_exists(_bodyData, "components") || variable_struct_exists(_bodyData, "embeds") || variable_struct_exists(_bodyData, "stickerIds")){
-			_body += "--" + _boundary + "\r\n";
-			_body += "Content-Disposition: form-data; name=\"payload_json\"\r\n";
-			_body += "Content-Type: application/json\r\n\r\n";
-			_body += json_stringify(_bodyData) + "\r\n";
-		} else {
-			show_debug_message("From .messageSend: No message data was given to send");
-			return;
-		}
-	
-		// Add files to the multipart/form-data body
-		if (_files != -1 && is_array(_files)){
-			var _i = 0;
-			var _filesArrayLength = array_length(_files);
-		
-			repeat(_filesArrayLength){
-				var _currentFile = _files[_i];
-				var _fileBuffer = buffer_load(_currentFile.__filePath);
-				var _fileBase64 = buffer_base64_encode(_fileBuffer, 0, buffer_get_size(_fileBuffer));
-				buffer_delete(_fileBuffer);
-			
-				_body += "--" + _boundary + "\r\n";
-				_body += "Content-Disposition: form-data; name=\"files[" + string(_i) + "]\"; filename=\"" + _currentFile.__fileName + "\"\r\n";
-				_body += "Content-Type: " + "image/png" + "\r\n";
-				_body += "Content-Transfer-Encoding: base64\r\n\r\n";
-				_body += _fileBase64 + "\r\n";
-			
-				_i++;	
-			}
-		}
-	
-		_body += "--" + _boundary + "--\r\n";
-
-		// Send the HTTP request
-		var _requestId = http_request(_url, "POST", _headers, _body);
-		__discord_add_request_to_sent(_requestId, _callback);
-
-		// Cleanup
-		ds_map_destroy(_headers);		
+		__discord_send_http_request_multipart("channels/" + _channelId + "/messages", "POST", _bodyData, _files, __botToken, _callback);
 	}
 	
 	#endregion
@@ -176,48 +135,7 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 			variable_struct_set(_bodyData, "attachments", _attachments);		
 		}
 
-		// Create the multipart/form-data body content
-		var _body = "";
-	
-		if (variable_struct_exists(_bodyData, "content") || variable_struct_exists(_bodyData, "components") || variable_struct_exists(_bodyData, "embeds") || variable_struct_exists(_bodyData, "attachments")){
-			_body += "--" + _boundary + "\r\n";
-			_body += "Content-Disposition: form-data; name=\"payload_json\"\r\n";
-			_body += "Content-Type: application/json\r\n\r\n";
-			_body += json_stringify(_bodyData) + "\r\n";
-		} else {
-			show_debug_message("From .messageEdit: No message data was given to edit");
-			return;
-		}
-	
-		// Add files to the multipart/form-data body
-		if (_files != -1 && is_array(_files)){
-			var _i = 0;
-			var _filesArrayLength = array_length(_files);
-		
-			repeat(_filesArrayLength){
-				var _currentFile = _files[_i];
-				var _fileBuffer = buffer_load(_currentFile.__filePath);
-				var _fileBase64 = buffer_base64_encode(_fileBuffer, 0, buffer_get_size(_fileBuffer));
-				buffer_delete(_fileBuffer);
-			
-				_body += "--" + _boundary + "\r\n";
-				_body += "Content-Disposition: form-data; name=\"files[" + string(_i) + "]\"; filename=\"" + _currentFile.__fileName + "\"\r\n";
-				_body += "Content-Type: " + "image/png" + "\r\n";
-				_body += "Content-Transfer-Encoding: base64\r\n\r\n";
-				_body += _fileBase64 + "\r\n";
-			
-				_i++;	
-			}
-		}
-	
-		_body += "--" + _boundary + "--\r\n";
-
-		// Send the HTTP request
-		var _requestId = http_request(_url, "PATCH", _headers, _body);
-		__discord_add_request_to_sent(_requestId, _callback);
-
-		// Cleanup
-		ds_map_destroy(_headers);		
+		__discord_send_http_request_multipart("channels/" + _channelId + "/messages/" + _messageId, "PATCH", _bodyData, _files, __botToken, _callback);
 	}
 
 	
@@ -348,7 +266,7 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	/// @param {string} messageId The id of the message to add the reaction to
 	/// @param {string} emoji The emoji to use for the reaction
 	static messageReactionCreate = function(_channelId, _messageId, _emoji, _callback = -1) {	
-		var _urlEnpoint = "channels/" + _channelId + "/messages/" + _messageId + "/reactions/" + __url_encode(_emoji) + "/@me";
+		var _urlEnpoint = "channels/" + _channelId + "/messages/" + _messageId + "/reactions/" + __discord_url_encode(_emoji) + "/@me";
 		__discord_send_http_request_standard(_urlEnpoint, "PUT", -1, __botToken, _callback);
 	}
 
@@ -363,7 +281,7 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	/// @param {string} emoji The url-encoded emoji to remove
 	/// @param {function} callback The function to execute for the request's response. Default: -1
 	static messageReactionDelete = function(_channelId, _messageId, _emoji, _callback = -1){
-		__discord_send_http_request_standard("channels/" + _channelId + "/messages/" + _messageId + "/reactions/" + __url_encode(_emoji) + "/@me", "DELETE", -1, __botToken, _callback);
+		__discord_send_http_request_standard("channels/" + _channelId + "/messages/" + _messageId + "/reactions/" + __discord_url_encode(_emoji) + "/@me", "DELETE", -1, __botToken, _callback);
 	}
 
 	#endregion
@@ -608,6 +526,67 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	
 	#endregion
 	
+	#region guildRolesGet(guildId, [callback])
+	
+	/// @func guildRolesGet(guildId, [callback])
+	/// @desc Fetches the roles of a server
+	/// @param {string} guildId The id of the guild (server) from which to fetch the roles
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	static guildRolesGet = function(_guildId, _callback = -1){
+	    var _urlEndpoint = "guilds/" + _guildId + "/roles";
+	    __discord_send_http_request_standard(_urlEndpoint, "GET", -1, __botToken, _callback);
+	}
+	
+	#endregion
+	
+	#region guildRoleCreate(guildId, [callback])
+	
+	/// @func guildRoleCreate(guildId, [callback])
+	/// @desc Creates a new role in a server
+	/// @param {string} guildId The id of the guild (server) where the role will be created
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	/// @param {string} name The name of the role
+	/// @param {string} permissions bitwise value of the enabled/disabled permissions
+	/// @param {real} color bitwise value of the enabled/disabled permissions
+	/// @param {bool} hoist whether the role should be displayed separately in the sidebar
+	/// @param {any} icon the role's icon image (if the guild has the ROLE_ICONS feature)
+	/// @param {string} unicodeEmoji the role's unicode emoji as a standard emoji (if the guild has the ROLE_ICONS feature)
+	/// @param {bool} mentionable whether the role should be mentionable
+	static guildRoleCreate = function(_guildId, _callback = -1, _name = "new role", _permissions = -1, _color = 0, _hoist = false, _icon = pointer_null, _unicodeEmoji = pointer_null, _mentionable = false){
+	    var _urlEndpoint = "guilds/" + _guildId + "/roles";
+		
+		var _bodyData = {
+			name: _name,
+			color: _color,
+			hoist: _hoist,
+			icon: _icon,
+			unicode_emoji: _unicodeEmoji,
+			mentionable: _mentionable
+		}
+		
+		if (_permissions != -1){
+			_bodyData[$ "permissions"] = _permissions;	
+		}
+		
+	    __discord_send_http_request_standard(_urlEndpoint, "POST", _bodyData, __botToken, _callback);
+	}
+	
+	#endregion
+	
+	#region guildRoleDelete(guildId, roleId, [callback])
+	
+	/// @func guildRoleDelete(guildId, roleId, [callback])
+	/// @desc Deletes a role from a server
+	/// @param {string} guildId The id of the guild (server) where the role will be deleted
+	/// @param {string} roleId The id of the role to be deleted
+	/// @param {function} callback The function to execute for the request's response. Default: -1
+	static guildRoleDelete = function(_guildId, _roleId, _callback = -1){
+	    var _urlEndpoint = "guilds/" + _guildId + "/roles/" + _roleId;
+	    __discord_send_http_request_standard(_urlEndpoint, "DELETE", -1, __botToken, _callback);
+	}
+	
+	#endregion
+	
 	#region triggerTypingIndicator(channelId, [callback])
 	
 	/// @func triggerTypingIndicator(channelId, [callback])
@@ -624,22 +603,21 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	#region Gateway event functions
 	
 	//Set up gateway events
-	if (_useGatewayEvents){
-		var _url = "wss://gateway.discord.gg/?v=10&encoding=json";
-		__gatewaySocket = network_create_socket_ext(network_socket_wss, 443);
-		__gatewayConnection = network_connect_raw_async(__gatewaySocket, _url, 443);	
-	}else{
-		__gatewaySocket = -1;
-		__gatewayConnection = -1;	
-	}
-	
+	__gatewaySocket = -1;
+	__gatewayConnection = -1;	
 	__gatewayHeartbeatCounter = 0;
+	__gatewayHeartbeatTimeSource = -1;
 	__gatewayIndentityHandshake = false;
 	__gatewaySequenceNumber = -1;
 	__gatewayResumeUrl = "";
 	__gatewaySessionId = ""
 	__gatewayNumberOfDisconnects = 0;
+	__gatewayReconnect = false;
 	gatewayEventCallbacks = {};
+	
+	if (_useGatewayEvents){
+		__discord_gateway_new_connection(self);
+	}
 	
 	#region interactionResponseSend(interactionId, interactionToken, callbackType, [content], [callback], [components], [embeds], [tts])
 	
@@ -756,7 +734,7 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 	
 	#region interactionResponseFollowUp(interactionToken, content, [callback], [components], [embeds], [attachments], [files])
 	
-	/// @func interactionResponseFollowUp(applicationId, interactionToken, content, [callback], [components], [embeds], [attachments], [files])
+	/// @func interactionResponseFollowUp(interactionToken, content, [callback], [components], [embeds], [attachments], [files])
 	/// @desc Sends a new follow-up message to an Interaction. Must include a message.
 	/// @param {string} interactionToken The token for the Interaction
 	/// @param {string} content The new message content (Up to 2000 characters)
@@ -845,22 +823,21 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 		if (_bytesSent > 0){	
 			__gatewayHeartbeatCounter++;
 		
-			if (!__gatewayIndentityHandshake && __gatewayHeartbeatCounter > 0){
-				__gatewaySendIdentity();	
+			if (__gatewayHeartbeatCounter > 0){
+				if (!__gatewayIndentityHandshake && !__gatewayReconnect){
+					__gatewaySendIdentity();	
+				}else if (__gatewayReconnect){		
+					__gatewaySendResume();
+				}
 			}
 		}else{
-			__gatewayHeartbeatCounter = 0;	
-			var _url = "wss://gateway.discord.gg/?v=10&encoding=json";
-			network_destroy(__gatewaySocket);
-			__gatewaySocket = network_create_socket_ext(network_socket_wss, 443);
-			__gatewayConnection = network_connect_raw_async(__gatewaySocket, _url, 443);
-			__gatewayNumberOfDisconnects++;
 			__discordTrace("Connection to gateway lost: reconnecting...");
+			__discord_gateway_reconnect(self);
 		}
 	}
 	
 	/// @func __gatewaySendIdentity()
-	/// @desc after a heartbeat is established with the gateway, an indentity must be sent to finish setting up the connection
+	/// @desc after a heartbeat is established with the gateway, an identity must be sent to finish setting up the connection
 	function __gatewaySendIdentity() {
 		var _botToken = __botToken;
 	
@@ -880,13 +857,29 @@ function discordBot(_botToken, _applicationId, _useGatewayEvents = false) constr
 		__gatewayEventSend(_payload);
 	}
 	
+	/// @func __gatewaySendResume()
+	/// @desc Sends a resume event for use after a disconnect
+	function __gatewaySendResume() {
+		//Send resume gateway event to discord
+		var _resumeData = {
+			op: DISCORD_GATEWAY_OP_CODE.resume,
+			d: {
+				token: __botToken,
+				session_id: __gatewaySessionId,
+				seq: int64(__gatewaySequenceNumber)
+			}
+		}
+						
+		__gatewayEventSend(_resumeData);		
+	}
+	
 	/// @func __gatewayEventSend(payloadStruct)
 	/// @desc Takes a struct, encodes it, and sends it to the Discord event
 	function __gatewayEventSend(_payloadStruct){
 		var _payloadString = json_stringify(_payloadStruct);
 		var _payloadBuffer = buffer_create(0, buffer_grow, 1);
 		buffer_write(_payloadBuffer, buffer_string, _payloadString);
-		var _payloadBufferTrimmed = __trim_buffer(_payloadBuffer);
+		var _payloadBufferTrimmed = __discord_gateway_trim_buffer(_payloadBuffer);
 		//Returns the number of bytes sent or a number less than 0 if it failed
 		var _bytesSent = network_send_raw(__gatewaySocket, _payloadBufferTrimmed, buffer_get_size(_payloadBufferTrimmed), network_send_text);
 		buffer_delete(_payloadBufferTrimmed);		

@@ -16,5 +16,15 @@ function discord_http_response_parse(){
 /// @desc Parses the async_load map's "result" key in a HTTP async event which is typically the data you will be working with
 /// @return Struct or array
 function discord_http_response_result(){
-	return json_parse(json_encode(async_load)).result;	
+	var _dataStruct = json_parse(json_encode(async_load));
+	
+	if (variable_struct_exists(_dataStruct, "result")){
+		try{
+			return json_parse(_dataStruct.result);	
+		}catch(_error){
+			return _dataStruct.result;	
+		}
+	}else{
+		return {};	
+	}
 }

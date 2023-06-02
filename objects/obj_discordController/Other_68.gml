@@ -32,21 +32,25 @@ repeat(array_length(obj_discordController.botArray)){
 			case network_type_data:
 				var _receivedData = discord_gateWay_event_parse();
 		
-				// Store the sequence number if it exists
-				if (_receivedData.s != pointer_null) {
-					var _tester = 0;
-				    _currentBot.__gatewaySequenceNumber = _receivedData.s;
-				}
-
 				// Event Handling
 				switch (_receivedData.op){
 				    //This event is the first event that is received. For setting up an initial heartbeat with the gateway
 					case DISCORD_GATEWAY_OP_CODE.hello:
+						if (_currentBot.__gatewayReconnect){
+							_currentBot.__gatewaySendResume();	
+						}
+						
 						_currentBot.__gatewaySendHeartbeat();
 				        var _heartbeatInterval = floor(_receivedData.d.heartbeat_interval / 1000);  // Convert ms to seconds
-						__discordTrace("Heartbeat interval: " + string(_heartbeatInterval));
+						__discordTrace("Hello - Heartbeat interval - Every " + string(_heartbeatInterval) + " seconds");
+						
+						//Make sure a heartbeat timesource doesn't already exist
+						if (time_source_exists(_currentBot.__gatewayHeartbeatTimeSource)){
+							time_source_destroy(_currentBot.__gatewayHeartbeatTimeSource);		
+						}
+						
 						//Create a Time Source to send heartbeats
-						var _heartbeatTimeSource = time_source_create(
+						_currentBot.__gatewayHeartbeatTimeSource = time_source_create(
 					        time_source_global,
 					        _heartbeatInterval,
 					        time_source_units_seconds,
@@ -54,7 +58,7 @@ repeat(array_length(obj_discordController.botArray)){
 							[],
 							-1
 				        );
-				        time_source_start(_heartbeatTimeSource);					
+				        time_source_start(_currentBot.__gatewayHeartbeatTimeSource);					
 				        break;
 				
 					//Discord acknowledges each heartbeat sent over the gateway
@@ -70,14 +74,30 @@ repeat(array_length(obj_discordController.botArray)){
 						
 					//attempt to reconnect and resume 
 					case DISCORD_GATEWAY_OP_CODE.reconnect:
-						__discordTrace("Reconnect required, attempting...");
-						network_destroy(_currentBot.__gatewaySocket);
-						_currentBot.__gatewaySocket = network_create_socket_ext(network_socket_wss, 443);
-						_currentBot.__gatewayConnection = network_connect_raw_async(_currentBot.__gatewaySocket, _currentBot.__gatewayResumeUrl + "?v=10&encoding=json", 443);
+						__discordTrace("Reconnect required, attempting...");			
+						__discord_gateway_reconnect(_currentBot);
+						break;
+						
+					case DISCORD_GATEWAY_OP_CODE.invalidSession:
+						__discordTrace("Session invalid, reconnecting...");
+						var _sessionIsResumable = _receivedData.d;
+							
+						if (_sessionIsResumable){
+							__discordTrace("Session invalid is resumable, attempting to resume session");	
+							__discord_gateway_reconnect(_currentBot);
+						}else{
+							__discordTrace("Session invalid is NOT resumable, creating new connection");	
+							__discord_gateway_new_connection(_currentBot);
+						}
 						break;
 				
 					//Identity handshakes and normal gateway events sent from your discord app
 					case DISCORD_GATEWAY_OP_CODE.dispatch:
+						// Store the sequence number if it exists
+						if (_receivedData.s != pointer_null) {
+						    _currentBot.__gatewaySequenceNumber = _receivedData.s;
+						}
+					
 						if (is_string(_receivedData.t)){
 							var _eventName = _receivedData.t; 
 							var _eventData = _receivedData.d;
