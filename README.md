@@ -1,5 +1,5 @@
 # GMDiscord
- Discord API bindings for GameMaker LTS+. Write Discord applications in pure GML and handle interactions via the Discord gateway. This library is still in it's very early days, but I am trying to get most of the major functionality from the API complete. 
+ Discord API bindings for GameMaker LTS+. Write Discord applications in pure GML and handle interactions via the Discord gateway. This library is still incomplete, but has most of the major functionality from the API. 
  The library follows the [Discord API documentation](https://discord.com/developers/docs/intro) pretty strictly, although not every optional parameter may have been implemented yet for a particular function.
  - Read the docs [here](https://github.com/chesrowe/GMDiscord/wiki)
  
