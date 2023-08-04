@@ -1,8 +1,0 @@
-requestCallbacks = [];
-botArray = [];
-
-
-
-
-
-
