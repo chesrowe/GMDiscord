@@ -1095,7 +1095,7 @@ myBot.guildMembersGet(_guildId, _callback);
 
 Fetches the channels of a server.
 
-### **Returns**
+#### **Returns**
 Returns an array of [guild channel structs](https://discord.com/developers/docs/resources/channel#channel-object). Does not include threads.
 
 #### **Parameters**

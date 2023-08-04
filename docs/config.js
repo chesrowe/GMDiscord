@@ -24,6 +24,6 @@ const config = {
 	description: 'Discord API integration for GameMaker 2022 LTS',
 	latestVersion: '06.01.2023',
 	otherVersions: [],
-	favicon: 'assets/favicon.ico',
+	favicon: 'assets/docsIcon.png',
 	themeColor: '#ffe699',
 };
