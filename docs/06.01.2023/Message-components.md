@@ -37,7 +37,7 @@ There are 5 different styles of buttons. Use the `DISCORD_BUTTON_STYLE` enum whe
 - Non-link buttons must have a `customId`, and cannot have a `url`
 - Link buttons must have a `url`, and cannot have a `customId`
 - Link buttons do not send an [interaction](https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object) to your app when clicked
-- When a user clicks on a non-link button, your app will receive an interaction via the gateway if your bot is connected. See [Handling gateway events](https://github.com/chesrowe/GMDiscord/wiki/Handling-gateway-events)
+- When a user clicks on a non-link button, your app will receive an interaction via the gateway if your bot is connected. See [Handling gateway events](Handling-gateway-events)
 
 #### **Parameters**
 - **`customId`** *(string)*: The custom identifier for the component. If the button is of the link type, this argument is ignored.
