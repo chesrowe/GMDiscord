@@ -1,9 +1,9 @@
 # **GMDiscord**
 Welcome to the **GMDiscord** docs! This library provides Discord API integration for GameMaker, allowing you to create interactive and engaging experiences for your Discord community directly in GML.
 
-I've tried to follow the [official docs](https://discord.com/developers/docs) very closely. 
+I've tried to follow the [official API docs](https://discord.com/developers/docs) very closely. 
 
-One thing to note is that the API refers to Discord servers as *Guilds*. Any time you see a reference to a guild, that means server. 
+One thing to note is that the Discord API refers to Discord servers as *Guilds*. Any time you see a reference to a guild, that means server. 
 
 ## **Main Features**
 
